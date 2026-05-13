@@ -1,0 +1,102 @@
+{
+  "cases": [
+    {
+      "case_id": "case_001",
+      "expected": {
+        "status": "blocked",
+        "approval_status": "blocked_pending_missing_information",
+        "risk_tier": "high",
+        "budget_status": "sufficient",
+        "duplicate_vendor_matched": true,
+        "required_reviewers_include": [
+          "Business owner",
+          "Procurement manager",
+          "VP Finance",
+          "Legal",
+          "Security",
+          "Executive sponsor"
+        ],
+        "required_reviewers_exclude": [
+          "CFO"
+        ],
+        "missing_contains": [
+          "SOC 2 Type II",
+          "Data Processing Agreement",
+          "Data-use opt-out"
+        ],
+        "finding_text_contains": [
+          "likely existing-vendor match",
+          "Net 60",
+          "SOC 2 Type II",
+          "model or service improvement",
+          "Subprocessors include non-US regions"
+        ]
+      }
+    },
+    {
+      "case_id": "case_002",
+      "expected": {
+        "status": "blocked",
+        "approval_status": "blocked_pending_missing_information",
+        "risk_tier": "low",
+        "budget_status": "sufficient",
+        "duplicate_vendor_matched": true,
+        "required_reviewers_include": [
+          "Business owner",
+          "Procurement manager"
+        ],
+        "required_reviewers_exclude": [
+          "VP Finance",
+          "CFO",
+          "Legal",
+          "Security",
+          "Executive sponsor"
+        ],
+        "missing_contains": [
+          "Updated tax form",
+          "Updated vendor setup form"
+        ],
+        "finding_text_contains": [
+          "Preliminary risk tier is low",
+          "likely existing-vendor match"
+        ]
+      }
+    },
+    {
+      "case_id": "case_003",
+      "expected": {
+        "status": "blocked",
+        "approval_status": "blocked_pending_missing_information",
+        "risk_tier": "high",
+        "budget_status": "insufficient",
+        "duplicate_vendor_matched": false,
+        "required_reviewers_include": [
+          "Business owner",
+          "Procurement manager",
+          "VP Finance",
+          "CFO",
+          "Legal",
+          "Security",
+          "Executive sponsor"
+        ],
+        "required_reviewers_exclude": [],
+        "missing_contains": [
+          "SOC 2 Type II",
+          "Data Processing Agreement",
+          "AI training opt-out",
+          "SCIM provisioning answer",
+          "Incident response"
+        ],
+        "finding_text_contains": [
+          "Annual contract value exceeds remaining budget",
+          "ACV requires CFO approval",
+          "Net 90",
+          "SOC 2 Type II",
+          "model or service improvement",
+          "Limitation of liability"
+        ]
+      }
+    }
+  ]
+}
+

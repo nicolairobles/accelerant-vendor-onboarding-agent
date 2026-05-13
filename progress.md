@@ -1,0 +1,40 @@
+# Progress
+
+## 2026-05-13
+
+- Researched requirements tracking and guardrails for AI-assisted/vibe-coded projects.
+- Added `docs/requirements/requirements-control-plane.md`.
+- Added `docs/requirements/requirements-register.md`.
+- Added `docs/requirements/acceptance-matrix.md`.
+- Added repo-local `AGENTS.md` with AI development rules.
+- Added GitHub issue form and pull request template for later private repo publication.
+- Added planning files for persistent AI working memory.
+- Created first vertical-slice work item for `REQ-001` through `REQ-009` on `case_003`.
+- Implemented deterministic schemas, inventory, parsers, tool checks, policy checks, trace recorder, pipeline, and CLI.
+- Generated `outputs/case_003.json` and `outputs/case_003.trace.json`.
+- Verified the vertical slice with `python3 -m pytest -q`: `5 passed`.
+- Noted environment issue: bare `pytest` points at Python 3.13 without dependencies; use `python3 -m pytest`.
+- Performed QA review of the `case_003` vertical slice.
+- Fixed trace evidence IDs, vendor-email evidence modeling, case-specific policy strings, and missing-file test coverage.
+- Re-verified with `python3 -m pytest -q`: `7 passed`.
+- Generalized deterministic pipeline and policy logic across `case_001`, `case_002`, and `case_003`.
+- Added `evals/seed-cases.json`, `vendor_agent/evaluator.py`, and `python3 -m vendor_agent.cli eval`.
+- Added all-case eval tests; full test suite now passes with `10 passed`.
+- Rebuilt `app.py` as a Streamlit review cockpit over the `DecisionPacket` contract.
+- Added `ARCHITECTURE.md` and `PRODUCTIONIZATION.md`.
+- Started Streamlit locally and verified HTTP 200 at `http://127.0.0.1:8501`.
+- Performed final QA across CLI, evals, tests, docs, git hygiene, and Streamlit UI.
+- Fixed README setup guidance, `.env.example`, Streamlit vendor-name truncation, overview dollar rendering, and Streamlit test coverage.
+- Added GitHub Actions CI for compile checks, unit tests, and deterministic evals.
+- Configured local `origin` remote to `https://github.com/nicolairobles/accelerant-vendor-onboarding-agent.git`.
+- Re-verified with `python3 -m pytest -q`: `13 passed`.
+- Re-verified with `python3 -m vendor_agent.cli eval`: `3/3 passed`.
+- Added `docs/quality/final-qa-assessment.md`.
+- Implemented uploaded vendor package mode for multi-file and zip uploads.
+- Added `tests/test_upload_mode.py` covering upload staging, zip support, and missing-file validation.
+- Updated requirements tracking for `REQ-018`.
+- Performed end-to-end QA after upload mode.
+- Re-verified with `python3 -m pytest -q`: `16 passed`.
+- Re-verified with `python3 -m vendor_agent.cli eval`: `3/3 passed`.
+- Browser-tested sample mode, multi-file upload, zip upload, missing-file validation, and mobile upload visibility.
+- Added `docs/quality/upload-mode-final-qa.md`.
