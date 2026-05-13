@@ -39,7 +39,7 @@ source .venv/bin/activate
 python -m pip install -r requirements.txt
 ```
 
-Python 3.11 is the intended runtime for deployment. The current prototype is deterministic and does not require an LLM API key. It includes an LLM-ready synthesis contract and deterministic reviewer brief fallback.
+Python 3.11 is the intended runtime for deployment. The policy pipeline is deterministic. Reviewer synthesis can run in deterministic mode or, when configured, through the OpenAI API.
 
 ## Working Commands
 
@@ -134,9 +134,9 @@ See `docs/quality/deployment-final-qa.md` for the full deployment QA notes.
 
 ## LLM Synthesis Stance
 
-The submitted prototype intentionally keeps policy decisions deterministic. It now includes packet-grounded reviewer synthesis for summaries, vendor follow-up drafts, and internal notes, but this synthesis is validated against the existing structured decision packet and does not require `OPENAI_API_KEY`.
+The submitted prototype intentionally keeps policy decisions deterministic. It now includes packet-grounded reviewer synthesis for summaries, vendor follow-up drafts, and internal notes. By default, synthesis uses the deterministic fallback and does not require `OPENAI_API_KEY`.
 
-A live LLM provider can be added later behind `SynthesisBundle` and `build_llm_synthesis_payload()`. That provider should remain optional, use Streamlit secrets for credentials, and fail closed if schema, evidence, or prohibited-language validation fails.
+The live OpenAI provider is implemented behind `SynthesisBundle` and `build_llm_synthesis_payload()`. Enable it with `OPENAI_SYNTHESIS_PROVIDER=openai`, `OPENAI_API_KEY`, and optionally `OPENAI_SYNTHESIS_MODEL`. It remains optional, should use Streamlit secrets for deployment credentials, and fails closed to deterministic synthesis if schema, evidence, or prohibited-language validation fails.
 
 See `docs/research/llm-synthesis-assessment.md` for the recommended architecture and eval plan.
 

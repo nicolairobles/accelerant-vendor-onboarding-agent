@@ -113,8 +113,9 @@ The prototype now includes an LLM-ready synthesis layer without requiring a live
 
 - `SynthesisBundle` is part of the structured packet contract.
 - `vendor_agent.synthesis` creates a reviewer brief, vendor follow-up draft, and internal note from the validated `DecisionPacket`.
-- `build_llm_synthesis_payload()` defines the compact structured payload a future LLM provider can receive.
+- `build_llm_synthesis_payload()` defines the compact structured payload the optional OpenAI provider receives.
+- `build_openai_synthesis_bundle()` calls the OpenAI Responses API with structured output when `OPENAI_SYNTHESIS_PROVIDER=openai` and an API key are configured.
 - The synthesis output validates evidence IDs, preserves missing-information items, and checks for prohibited approval/spend/send language.
 - The Streamlit Overview tab shows a `Reviewer Brief` while keeping deterministic status, risk, budget, findings, evidence, and route visible.
 
-This preserves the recommendation above: the model can improve readability later, but the deterministic packet remains the source of truth.
+This preserves the recommendation above: the model can improve readability, but the deterministic packet remains the source of truth and provider failures fall back to deterministic synthesis.

@@ -90,9 +90,9 @@ Production should enforce:
 
 ## LLM Addition Path
 
-The current prototype includes an LLM-ready synthesis contract and deterministic fallback. A live LLM provider can be added behind that contract later.
+The current prototype includes an LLM-ready synthesis contract, deterministic fallback, and optional live OpenAI provider. The provider is controlled by environment configuration and should use Streamlit secrets in deployment.
 
-If a live LLM is added, it should be limited to:
+The live LLM is limited to:
 
 - concise summary phrasing
 - draft vendor follow-up
@@ -115,6 +115,7 @@ Implementation guardrails:
 - validate output with Pydantic
 - validate cited evidence IDs against the packet
 - reject outputs that contain approval/send/commitment language
+- fall back to deterministic synthesis if the provider call fails or validation fails
 - compare output quality with evals before switching models or prompts
 
 ## Deployment Path

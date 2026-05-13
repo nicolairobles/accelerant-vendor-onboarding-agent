@@ -74,6 +74,7 @@ kanban-plugin: board
 - [x] Productization UX audit and cleanup of noisy/nonfunctional review controls
 - [x] Add screenshots for README/submission package
 - [x] Assess process-flow PNG and add LLM-ready reviewer synthesis
+- [x] Add optional live OpenAI synthesis with fail-closed validation
 
 %% kanban:settings
 ```

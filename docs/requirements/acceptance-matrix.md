@@ -27,7 +27,7 @@ This matrix defines how we know each requirement is actually satisfied.
 | REQ-021 | Workflow/workbook export tests | `tests/test_streamlit_app.py` | Case view includes triage workflow progress and workbook export contains Summary, Missing Info, Findings, Approval Route, and Trace sheets. | Verified |
 | REQ-022 | Sample upload packet tests | `tests/test_sample_upload_packets.py`, `data/sample-upload-packets/README.md` | Valid sample packets run as expected; invalid/guardrail sample packets are blocked or remain human-gated; zips are available for manual app testing. | Verified |
 | REQ-023 | Productized reviewer UX test | `tests/test_streamlit_app.py`, `docs/quality/productization-ux-audit.md` | Sidebar has no implementation-mode copy; missing-info follow-up is not rendered as inert checkboxes; dashboard uses queue-wide Open Requests; case view shows Required Follow-up, Human Review Route, and Triage Workflow. | Verified |
-| REQ-024 | Synthesis guardrail tests | `tests/test_synthesis.py`, `tests/test_streamlit_app.py`, `docs/quality/png-workflow-and-synthesis-assessment.md` | Reviewer synthesis is generated from structured packet fields, cites known evidence IDs, preserves missing information, avoids prohibited action language, appears in the UI, and is exported in the workbook. | Verified |
+| REQ-024 | Synthesis guardrail tests | `tests/test_synthesis.py`, `tests/test_streamlit_app.py`, `docs/quality/live-openai-synthesis-qa.md` | Reviewer synthesis is generated from structured packet fields, optional OpenAI structured output is validated, known evidence IDs are cited, missing information is preserved, prohibited action language is blocked, UI/export surfaces remain deterministic-safe. | Verified |
 
 ## Verification Tiers
 

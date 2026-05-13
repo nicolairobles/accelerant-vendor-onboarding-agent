@@ -485,7 +485,10 @@ def render_reviewer_brief(packet) -> None:
         st.markdown(_summary_html(packet.summary), unsafe_allow_html=True)
         return
     st.markdown(_summary_html(synthesis.executive_summary), unsafe_allow_html=True)
-    st.caption("Built from the validated decision packet. Policy status, risk, budget, and routing remain deterministic.")
+    st.caption(
+        "Built from the validated decision packet. Policy status, risk, budget, and routing remain deterministic."
+    )
+    st.caption("Synthesis source: %s" % synthesis.model_name)
     with st.expander("Synthesis validation"):
         st.write("Status: %s" % synthesis.validation_status)
         st.write("Source: structured decision packet only")
@@ -846,7 +849,7 @@ def _markdown_brief(packet) -> str:
 
 def _reviewer_summary(packet) -> str:
     synthesis = getattr(packet, "synthesis", None)
-    if synthesis and synthesis.validation_status == "passed":
+    if synthesis and synthesis.validation_status.startswith("passed"):
         return synthesis.executive_summary
     return packet.summary
 

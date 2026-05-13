@@ -33,7 +33,7 @@ case package
 | `vendor_agent.schemas` | Defines the product contract for evidence, facts, findings, approval route, drafts, trace, and decision packet. |
 | `vendor_agent.tools` | Implements deterministic tool-like checks: budget lookup, duplicate vendor lookup, TCV calculation, and risk classification. |
 | `vendor_agent.policies` | Applies deterministic procurement, finance, legal, security, and vendor-risk rules. |
-| `vendor_agent.synthesis` | Creates a reviewer-facing synthesis bundle from the validated decision packet and defines the future LLM payload boundary. |
+| `vendor_agent.synthesis` | Creates a reviewer-facing synthesis bundle from the validated decision packet and optionally calls OpenAI for structured synthesis. |
 | `vendor_agent.tracing` | Records workflow steps, inputs, outputs, timing, requirement IDs, and evidence IDs. |
 | `vendor_agent.pipeline` | Orchestrates one case into a `DecisionPacket`. |
 | `vendor_agent.evaluator` | Runs all seeded cases against expected baselines. |
@@ -56,9 +56,9 @@ The current prototype uses deterministic code for:
 - determining approval route
 - preserving evidence and trace
 
-An LLM can be added later for concise summaries or better draft wording, but only after deterministic facts and policy outputs exist. Model output should validate against the same schemas and must not override policy checks.
+An LLM can be used for concise summaries or better draft wording, but only after deterministic facts and policy outputs exist. Model output validates against the same schemas and must not override policy checks.
 
-The current implementation includes an LLM-ready synthesis contract but no live model dependency. `SynthesisBundle` is generated from the validated `DecisionPacket`, validates cited evidence IDs and prohibited action language, and can be replaced by an optional provider call later.
+The current implementation includes both deterministic synthesis and an optional live OpenAI provider. `SynthesisBundle` is generated from the validated `DecisionPacket`, validates cited evidence IDs and prohibited action language, and fails closed to deterministic synthesis when provider calls or validation fail.
 
 ## Decision Packet Contract
 

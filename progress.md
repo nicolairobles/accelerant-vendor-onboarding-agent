@@ -57,3 +57,7 @@
 - Added `SynthesisBundle`, `vendor_agent.synthesis`, `prepare_reviewer_synthesis` trace coverage, and a `Reviewer Brief` UI section.
 - Added synthesis output to Markdown/workbook exports and tests for evidence-cited synthesis, missing-information preservation, and compact future-LLM payload boundaries.
 - Re-verified after synthesis changes: compile passed, 30 pytest tests passed, eval passed 3/3, whitespace check passed, and browser smoke confirmed Reviewer Brief/Synthesis validation render without bringing back old sidebar clutter.
+- Created a local OpenAI API key through the secure connector and stored it in ignored `.env.local`.
+- Added optional live OpenAI synthesis behind `OPENAI_SYNTHESIS_PROVIDER=openai`, using Responses API structured output and deterministic fallback on provider or validation failure.
+- QA finding: first live smoke could fail validation due missing-item wording drift. Fixed by requiring exact missing-item labels, setting temperature to 0, and failing closed to deterministic synthesis on validation failure.
+- Re-verified after live provider changes: compile passed, 32 pytest tests passed, eval passed 3/3, live OpenAI smoke passed for `case_003`, and Streamlit browser smoke passed in live-provider mode.

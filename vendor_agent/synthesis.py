@@ -1,8 +1,16 @@
 """Reviewer-facing synthesis from validated decision packets."""
 
-from typing import Any, Dict, List
+import json
+import os
+from datetime import datetime, timezone
+from typing import Any, Dict, List, Optional
+
+from pydantic import BaseModel, Field
 
 from .schemas import SynthesisBundle
+
+
+DEFAULT_OPENAI_SYNTHESIS_MODEL = "gpt-4o-mini-2024-07-18"
 
 
 PROHIBITED_PHRASES = [
@@ -18,13 +26,66 @@ PROHIBITED_PHRASES = [
 ]
 
 
-def build_synthesis_bundle(packet) -> SynthesisBundle:
+class SynthesisDraft(BaseModel):
+    executive_summary: str = Field(
+        description="Concise procurement-owner summary of the validated packet."
+    )
+    vendor_follow_up_draft: str = Field(
+        description=(
+            "Draft vendor follow-up. Must state it requires human review before sending "
+            "and include each missing_information item exactly."
+        )
+    )
+    internal_note_draft: str = Field(
+        description="Draft internal routing note for procurement and reviewers."
+    )
+    cited_evidence_ids: List[str] = Field(
+        default_factory=list,
+        description="Evidence IDs from the packet used in the synthesis.",
+    )
+
+
+def build_synthesis_bundle(packet, provider: Optional[str] = None) -> SynthesisBundle:
     """Build a reviewer brief from structured packet fields only.
 
     This deterministic implementation is the fallback and validation contract for
     a future LLM-backed synthesis call. It intentionally does not read raw source
     documents or alter packet decisions.
     """
+
+    selected_provider = (provider or os.getenv("OPENAI_SYNTHESIS_PROVIDER", "deterministic")).lower()
+    if selected_provider == "openai":
+        try:
+            bundle = build_openai_synthesis_bundle(packet)
+            if bundle.validation_status == "passed":
+                return bundle
+            fallback = build_deterministic_synthesis_bundle(packet)
+            return fallback.model_copy(
+                update={
+                    "synthesis_mode": "deterministic_fallback_after_openai_validation",
+                    "model_name": "%s -> deterministic-template-v1" % bundle.model_name,
+                    "generated_at": _now_utc(),
+                    "validation_status": "passed_with_provider_fallback",
+                    "validation_errors": bundle.validation_errors,
+                }
+            )
+        except Exception:
+            fallback = build_deterministic_synthesis_bundle(packet)
+            return fallback.model_copy(
+                update={
+                    "synthesis_mode": "deterministic_fallback_after_openai_error",
+                    "model_name": "%s -> deterministic-template-v1"
+                    % os.getenv("OPENAI_SYNTHESIS_MODEL", DEFAULT_OPENAI_SYNTHESIS_MODEL),
+                    "generated_at": _now_utc(),
+                    "validation_status": "passed_with_provider_fallback",
+                    "validation_errors": [],
+                }
+            )
+    return build_deterministic_synthesis_bundle(packet)
+
+
+def build_deterministic_synthesis_bundle(packet) -> SynthesisBundle:
+    """Build the deterministic reviewer brief fallback."""
 
     cited_evidence_ids = _cited_evidence_ids(packet)
     executive_summary = _executive_summary(packet)
@@ -39,10 +100,64 @@ def build_synthesis_bundle(packet) -> SynthesisBundle:
         case_id=packet.case_id,
         synthesis_mode="deterministic_packet_synthesis",
         model_name="deterministic-template-v1",
+        generated_at=_now_utc(),
         executive_summary=executive_summary,
         vendor_follow_up_draft=vendor_follow_up_draft,
         internal_note_draft=internal_note_draft,
         cited_evidence_ids=cited_evidence_ids,
+        validation_status="failed" if errors else "passed",
+        validation_errors=errors,
+    )
+
+
+def build_openai_synthesis_bundle(packet, client=None, model: Optional[str] = None) -> SynthesisBundle:
+    """Build a reviewer brief using OpenAI structured outputs."""
+
+    if client is None:
+        from openai import OpenAI
+
+        client = OpenAI()
+    model_name = model or os.getenv("OPENAI_SYNTHESIS_MODEL", DEFAULT_OPENAI_SYNTHESIS_MODEL)
+    response = client.responses.parse(
+        model=model_name,
+        input=[
+            {
+                "role": "system",
+                "content": (
+                    "You draft procurement reviewer synthesis from a validated vendor "
+                    "onboarding decision packet. Do not change status, risk, budget, "
+                    "missing information, approval route, prohibited actions, or evidence IDs. "
+                    "Do not approve vendors, commit spend, accept contract terms, or send messages. "
+                    "Every vendor-facing draft must say it requires human review before external use. "
+                    "Copy each value in expected_missing_items exactly at least once in the vendor "
+                    "follow-up draft. Cite only evidence IDs present in known_evidence_ids."
+                ),
+            },
+            {
+                "role": "user",
+                "content": json.dumps(build_llm_synthesis_payload(packet), sort_keys=True),
+            },
+        ],
+        text_format=SynthesisDraft,
+        temperature=0,
+    )
+    draft = response.output_parsed
+    if draft is None:
+        raise ValueError("OpenAI synthesis returned no parsed output")
+    errors = _validate_synthesis(
+        packet,
+        [draft.executive_summary, draft.vendor_follow_up_draft, draft.internal_note_draft],
+        draft.cited_evidence_ids,
+    )
+    return SynthesisBundle(
+        case_id=packet.case_id,
+        synthesis_mode="openai_responses_structured_output",
+        model_name=model_name,
+        generated_at=_now_utc(),
+        executive_summary=draft.executive_summary,
+        vendor_follow_up_draft=draft.vendor_follow_up_draft,
+        internal_note_draft=draft.internal_note_draft,
+        cited_evidence_ids=draft.cited_evidence_ids,
         validation_status="failed" if errors else "passed",
         validation_errors=errors,
     )
@@ -70,6 +185,15 @@ def build_llm_synthesis_payload(packet) -> Dict[str, Any]:
                 "evidence_ids": item.evidence_ids,
             }
             for item in packet.missing_information
+        ],
+        "expected_missing_items": [item.item for item in packet.missing_information],
+        "known_evidence_ids": [item.id for item in packet.evidence],
+        "validation_requirements": [
+            "Keep packet status, risk tier, budget status, approval route, and prohibited actions unchanged.",
+            "Include every expected_missing_items value exactly in vendor_follow_up_draft.",
+            "State that vendor_follow_up_draft requires human review before external use.",
+            "Use only known_evidence_ids in cited_evidence_ids.",
+            "Do not include approval, spend commitment, accepted terms, or external-send language.",
         ],
         "required_reviewers": packet.approval_route.required_reviewers,
         "prohibited_actions": packet.approval_route.prohibited_actions,
@@ -169,6 +293,10 @@ def _validate_synthesis(packet, texts: List[str], cited_evidence_ids: List[str])
     if packet.status not in combined and status_text not in combined:
         errors.append("packet status omitted from synthesis: %s" % packet.status)
     return errors
+
+
+def _now_utc() -> str:
+    return datetime.now(timezone.utc).isoformat()
 
 
 def _cited_evidence_ids(packet) -> List[str]:

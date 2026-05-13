@@ -42,17 +42,17 @@ The LLM must not determine risk, budget, missing information, required approvals
 
 - Added `SynthesisBundle` to the packet schema.
 - Added `vendor_agent.synthesis` with deterministic packet-grounded synthesis and validation.
-- Added a compact `build_llm_synthesis_payload()` for a future LLM call; it excludes raw source documents by default.
+- Added a compact `build_llm_synthesis_payload()` for optional OpenAI synthesis; it excludes raw source documents by default.
 - Added `prepare_reviewer_synthesis` to the trace.
 - Added `Reviewer Brief` to the Overview tab.
 - Added synthesis output to Markdown and workbook exports.
 - Added regression tests for grounded synthesis, evidence citations, missing-info preservation, and payload boundaries.
 
-This is intentionally LLM-ready rather than live LLM-backed. The repository still works without `OPENAI_API_KEY`, and no external model call is required for review.
+This remains deterministic-safe. The repository still works without `OPENAI_API_KEY`; when `OPENAI_SYNTHESIS_PROVIDER=openai` and a key are configured, the provider uses structured output and falls back if validation fails.
 
 ## Recommendation
 
-The next implementation step should be an optional OpenAI-backed synthesis provider behind the existing `SynthesisBundle` contract. That should happen only after confirming API key handling and adding a mocked provider test plus a live-provider smoke path that is skipped unless credentials are present.
+The optional OpenAI-backed synthesis provider now exists behind the `SynthesisBundle` contract. The next production step is to add deployed Streamlit secrets and broaden synthesis eval cases before relying on it in front of reviewers.
 
 Keep deterministic evals as the release gate. Add synthesis evals only when the live provider is enabled:
 

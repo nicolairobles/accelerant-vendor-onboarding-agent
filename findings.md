@@ -36,3 +36,10 @@
 - The current implementation is on track with the PNG. The main production gap is persisted workflow state for assignments, edits, signoffs, and final routing decisions.
 - LLM synthesis is still valuable inside the PNG's `Prepare outputs` stage because the human procurement owner needs a concise reviewer brief and draft language.
 - The safe synthesis boundary is downstream of the structured decision packet. The synthesis may rewrite summaries and drafts, but it must not change status, risk, budget, missing information, approval route, or prohibited actions.
+
+## 2026-05-13 Live OpenAI Synthesis QA Findings
+
+- The live OpenAI call is correctly scoped to drafting and synthesis. It is not part of policy, risk, budget, missing-information, or approval-route decisions.
+- First live smoke showed a realistic risk: even with structured output, the model may paraphrase required missing-item labels. Exact-label preservation is important because the packet is used for procurement follow-up.
+- The implemented fix is to require exact missing item labels, set temperature to 0, validate the output, and fall back to deterministic synthesis if validation fails.
+- Deployment still needs Streamlit secrets for live synthesis. The repository must not commit `.env.local` or any plaintext key.
