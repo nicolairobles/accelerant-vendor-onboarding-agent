@@ -28,10 +28,14 @@ def test_streamlit_app_switches_to_low_risk_case():
     assert not app.exception
     assert any("Workspace Depot" in item.value for item in app.markdown)
     assert any("Low" in item.value for item in app.metric)
-    assert any("Required Follow-up" in item.value for item in app.subheader)
-    assert any("Human Review Route" in item.value for item in app.subheader)
+    assert any("Action Cockpit" in item.value for item in app.subheader)
+    assert any("Required Vendor Follow-up" in item.value for item in app.subheader)
+    assert any("Internal Review Route" in item.value for item in app.subheader)
+    assert any("AI-Assisted Drafts" in item.value for item in app.subheader)
     assert any("Triage Workflow" in item.value for item in app.subheader)
     assert any("Reviewer Brief" in item.value for item in app.subheader)
+    assert any("Draft vendor follow-up" in item.label for item in app.text_area)
+    assert any("Audit details" in item.label for item in app.expander)
     assert not any("Updated tax form" in checkbox.label for checkbox in app.checkbox)
 
 

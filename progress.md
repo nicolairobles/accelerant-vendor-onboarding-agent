@@ -61,3 +61,7 @@
 - Added optional live OpenAI synthesis behind `OPENAI_SYNTHESIS_PROVIDER=openai`, using Responses API structured output and deterministic fallback on provider or validation failure.
 - QA finding: first live smoke could fail validation due missing-item wording drift. Fixed by requiring exact missing-item labels, setting temperature to 0, and failing closed to deterministic synthesis on validation failure.
 - Re-verified after live provider changes: compile passed, 32 pytest tests passed, eval passed 3/3, live OpenAI smoke passed for `case_003`, and Streamlit browser smoke passed in live-provider mode.
+- Reworked the case page into an action-first review cockpit: decision, next action, owner, required vendor follow-up, internal route, and editable AI-assisted drafts now appear before audit details.
+- Moved commercial context, policy findings, evidence, workflow, trace, and exports behind `Audit details`.
+- Added Streamlit secrets environment bridging so deployed root-level secrets can activate the optional OpenAI synthesis path without committing credentials.
+- Re-verified action cockpit changes: compile passed, 32 pytest tests passed, eval passed 3/3, whitespace check passed, and local browser smoke confirmed OpenAI synthesis source, AI-assisted drafts, audit disclosure, and no secrets warning.

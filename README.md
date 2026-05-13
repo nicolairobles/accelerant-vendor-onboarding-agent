@@ -96,15 +96,12 @@ The CLI writes:
 
 1. Open the deployed Streamlit app.
 2. Start on the dashboard case queue. Use it to compare case status, risk, spend, missing information, blockers, and next owner.
-3. Switch to `Review sample case` and open `case_003` for TalentPulse AI. This shows the hardest case: high risk, insufficient budget, legal/security/finance routing, missing vendor documents, evidence, drafts, and trace.
-4. Use the triage workflow panel and tabs to inspect how the packet is grounded:
-   - `Overview` for the procurement summary and required follow-up.
-   - `Findings` for policy-specific blockers.
-   - `Evidence` for source-linked extracted facts.
-   - `Drafts` for human-reviewed vendor and internal follow-up text.
-   - `Trace` for deterministic parser/tool/rule execution.
-5. Open `Export decision packet` to download JSON, trace, Markdown brief, or the XLSX triage workbook.
-6. Switch to `Upload package` to test a new vendor package. Upload either five files or one zip containing an intake workbook, quote CSV, contract PDF, security questionnaire, and vendor email. Optional support artifacts are mapped separately and reflected in the staged checklist.
+3. Switch to `Review sample case` and open `case_003` for TalentPulse AI. This shows the hardest case: high risk, insufficient budget, legal/security/finance routing, and missing vendor documents.
+4. Start with `Action Cockpit`. It shows the decision, next action, owner, reviewer brief, required vendor follow-up, and internal review route.
+5. Use `AI-Assisted Drafts` for editable vendor follow-up and internal note text. These drafts still require human approval before use.
+6. Open `Audit details` only when you need supporting commercial context, policy findings, evidence, workflow, trace, or exports.
+7. In `Audit details`, use `Exports` to download JSON, trace, Markdown brief, or the XLSX triage workbook.
+8. Switch to `Upload package` to test a new vendor package. Upload either five files or one zip containing an intake workbook, quote CSV, contract PDF, security questionnaire, and vendor email. Optional support artifacts are mapped separately and reflected in the staged checklist.
 
 ## Screenshots
 

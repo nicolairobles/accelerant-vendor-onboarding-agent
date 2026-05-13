@@ -1,6 +1,7 @@
 import html
 import importlib
 import json
+import os
 import shutil
 import tempfile
 from io import BytesIO
@@ -36,6 +37,33 @@ CASE_DISPLAY_NAMES = {
     "case_002": "case_002 - Workspace Depot",
     "case_003": "case_003 - TalentPulse AI",
 }
+SECRET_ENV_KEYS = [
+    "OPENAI_API_KEY",
+    "OPENAI_SYNTHESIS_PROVIDER",
+    "OPENAI_SYNTHESIS_MODEL",
+]
+
+
+def _configure_streamlit_secret_env() -> None:
+    if os.getenv("OPENAI_API_KEY") and os.getenv("OPENAI_SYNTHESIS_PROVIDER"):
+        return
+    secrets_paths = [
+        Path.home() / ".streamlit" / "secrets.toml",
+        Path.cwd() / ".streamlit" / "secrets.toml",
+    ]
+    if not any(path.exists() for path in secrets_paths):
+        return
+    try:
+        secrets = st.secrets
+    except Exception:
+        return
+    for key in SECRET_ENV_KEYS:
+        try:
+            value = secrets.get(key)
+        except Exception:
+            continue
+        if value and not os.getenv(key):
+            os.environ[key] = str(value)
 
 
 st.set_page_config(
@@ -43,6 +71,8 @@ st.set_page_config(
     page_icon="",
     layout="wide",
 )
+
+_configure_streamlit_secret_env()
 
 
 def main() -> None:
@@ -237,32 +267,53 @@ def render_packet(packet) -> None:
     col3.metric("Budget", packet.facts.budget.status.title())
     col4.metric("Risk", packet.facts.risk.tier.title())
 
-    action_col, route_col = st.columns([1.2, 1])
-    with action_col:
-        render_required_follow_up(packet)
+    render_action_cockpit(packet)
+    render_ai_assisted_drafts(packet)
+    render_audit_details(packet)
 
+
+def render_action_cockpit(packet) -> None:
+    st.subheader("Action Cockpit")
+    rows = _review_action_rows(packet)
+    next_action = rows[0]["Action"] if rows else "Route decision packet to required reviewers"
+    next_owner = rows[0]["Owner"] if rows else _next_owner(packet)
+
+    decision_col, action_col, owner_col = st.columns([0.8, 1.6, 1])
+    decision_col.metric("Decision", _status_label(packet))
+    action_col.markdown("**Next action**")
+    action_col.write(next_action)
+    owner_col.markdown("**Owner**")
+    owner_col.write(next_owner)
+
+    render_reviewer_brief(packet)
+
+    follow_up_col, route_col = st.columns([1.25, 1])
+    with follow_up_col:
+        render_required_follow_up(packet)
     with route_col:
         render_human_route(packet)
 
-    render_workflow_progress(packet)
-    render_exports(packet)
 
-    overview_tab, findings_tab, evidence_tab, drafts_tab, trace_tab = st.tabs(
-        ["Overview", "Findings", "Evidence", "Drafts", "Trace"]
-    )
-    with overview_tab:
-        render_overview(packet)
-    with findings_tab:
-        render_findings(packet)
-    with evidence_tab:
-        render_evidence(packet)
-    with drafts_tab:
-        render_drafts(packet)
-    with trace_tab:
-        render_trace(packet)
+def render_audit_details(packet) -> None:
+    with st.expander("Audit details", expanded=False):
+        context_tab, findings_tab, evidence_tab, workflow_tab, trace_tab, exports_tab = st.tabs(
+            ["Context", "Findings", "Evidence", "Workflow", "Trace", "Exports"]
+        )
+        with context_tab:
+            render_context(packet)
+        with findings_tab:
+            render_findings(packet, allow_expanders=False)
+        with evidence_tab:
+            render_evidence(packet)
+        with workflow_tab:
+            render_workflow_progress(packet, allow_expanders=False)
+        with trace_tab:
+            render_trace(packet, allow_expanders=False)
+        with exports_tab:
+            render_exports(packet)
 
 
-def render_workflow_progress(packet) -> None:
+def render_workflow_progress(packet, allow_expanders: bool = True) -> None:
     trace_tools = {entry.tool_name for entry in packet.trace}
     rows = [
         _workflow_row(
@@ -322,7 +373,15 @@ def render_workflow_progress(packet) -> None:
         use_container_width=True,
         hide_index=True,
     )
-    with st.expander("Function calls captured in trace"):
+    if allow_expanders:
+        with st.expander("Function calls captured in trace"):
+            st.dataframe(
+                workflow_df[["Stage", "Function calls"]],
+                use_container_width=True,
+                hide_index=True,
+            )
+    else:
+        st.subheader("Function calls captured in trace")
         st.dataframe(
             workflow_df[["Stage", "Function calls"]],
             use_container_width=True,
@@ -331,58 +390,67 @@ def render_workflow_progress(packet) -> None:
 
 
 def render_required_follow_up(packet) -> None:
-    st.subheader("Required Follow-up")
+    st.subheader("Required Vendor Follow-up")
     rows = _review_action_rows(packet)
     if not rows:
         st.success("No missing information or blocking follow-up detected.")
         return
-    for index, row in enumerate(rows, start=1):
-        st.markdown("**%s. %s**" % (index, row["Action"]))
-        st.caption("Owner: %s | Evidence: %s" % (row["Owner"], row["Evidence"] or "n/a"))
-        st.write(row["Why"])
+    display_rows = [
+        {
+            "Request": row["Action"],
+            "Owner": row["Owner"],
+            "Why needed": row["Why"],
+            "Evidence": row["Evidence"] or "n/a",
+        }
+        for row in rows[:5]
+    ]
+    st.dataframe(pd.DataFrame(display_rows), use_container_width=True, hide_index=True)
+    if len(rows) > len(display_rows):
+        st.caption("%s additional follow-up item(s) included in Audit details." % (len(rows) - len(display_rows)))
 
 
 def render_human_route(packet) -> None:
-    st.subheader("Human Review Route")
+    st.subheader("Internal Review Route")
     st.caption("Routing recommendation only. No approval, spend commitment, or external send has occurred.")
-    for index, reviewer in enumerate(packet.approval_route.required_reviewers, start=1):
-        st.write("%s. %s" % (index, reviewer))
+    if packet.approval_route.required_reviewers:
+        st.write(" > ".join(packet.approval_route.required_reviewers))
+    else:
+        st.write("Procurement owner")
     with st.expander("Guardrails enforced"):
         for action in packet.approval_route.prohibited_actions:
             st.write("- %s" % action)
 
 
 def render_exports(packet) -> None:
-    with st.expander("Export decision packet"):
-        cols = st.columns(4)
-        cols[0].download_button(
-            "JSON packet",
-            data=json.dumps(packet.model_dump(mode="json"), indent=2, sort_keys=True),
-            file_name="%s_decision_packet.json" % packet.case_id,
-            mime="application/json",
-            use_container_width=True,
-        )
-        cols[1].download_button(
-            "Trace",
-            data=json.dumps([entry.model_dump(mode="json") for entry in packet.trace], indent=2, sort_keys=True),
-            file_name="%s_trace.json" % packet.case_id,
-            mime="application/json",
-            use_container_width=True,
-        )
-        cols[2].download_button(
-            "Markdown brief",
-            data=_markdown_brief(packet),
-            file_name="%s_brief.md" % packet.case_id,
-            mime="text/markdown",
-            use_container_width=True,
-        )
-        cols[3].download_button(
-            "Workbook",
-            data=_triage_workbook_bytes(packet),
-            file_name="%s_triage_workbook.xlsx" % packet.case_id,
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            use_container_width=True,
-        )
+    cols = st.columns(4)
+    cols[0].download_button(
+        "JSON packet",
+        data=json.dumps(packet.model_dump(mode="json"), indent=2, sort_keys=True),
+        file_name="%s_decision_packet.json" % packet.case_id,
+        mime="application/json",
+        use_container_width=True,
+    )
+    cols[1].download_button(
+        "Trace",
+        data=json.dumps([entry.model_dump(mode="json") for entry in packet.trace], indent=2, sort_keys=True),
+        file_name="%s_trace.json" % packet.case_id,
+        mime="application/json",
+        use_container_width=True,
+    )
+    cols[2].download_button(
+        "Markdown brief",
+        data=_markdown_brief(packet),
+        file_name="%s_brief.md" % packet.case_id,
+        mime="text/markdown",
+        use_container_width=True,
+    )
+    cols[3].download_button(
+        "Workbook",
+        data=_triage_workbook_bytes(packet),
+        file_name="%s_triage_workbook.xlsx" % packet.case_id,
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        use_container_width=True,
+    )
 
 
 def render_upload_details(uploaded_case) -> None:
@@ -446,9 +514,7 @@ def render_upload_landing() -> None:
     st.dataframe(expected, use_container_width=True, hide_index=True)
 
 
-def render_overview(packet) -> None:
-    render_reviewer_brief(packet)
-
+def render_context(packet) -> None:
     left, right = st.columns(2)
     with left:
         st.subheader("Commercial")
@@ -478,6 +544,11 @@ def render_overview(packet) -> None:
         st.write("No missing information detected.")
 
 
+def render_overview(packet) -> None:
+    render_reviewer_brief(packet)
+    render_context(packet)
+
+
 def render_reviewer_brief(packet) -> None:
     st.subheader("Reviewer Brief")
     synthesis = getattr(packet, "synthesis", None)
@@ -498,7 +569,44 @@ def render_reviewer_brief(packet) -> None:
                 st.warning(error)
 
 
-def render_findings(packet) -> None:
+def render_ai_assisted_drafts(packet) -> None:
+    st.subheader("AI-Assisted Drafts")
+    synthesis = getattr(packet, "synthesis", None)
+    use_synthesis = synthesis and synthesis.validation_status.startswith("passed")
+    vendor_body = (
+        synthesis.vendor_follow_up_draft
+        if use_synthesis
+        else _draft_body(packet, "vendor")
+    )
+    internal_body = (
+        synthesis.internal_note_draft
+        if use_synthesis
+        else _draft_body(packet, "internal")
+    )
+    source = synthesis.model_name if synthesis else "deterministic packet draft"
+    st.caption("Draft source: %s. Human approval is required before external use." % source)
+
+    vendor_tab, internal_tab = st.tabs(["Vendor follow-up", "Internal note"])
+    with vendor_tab:
+        st.text_area(
+            "Draft vendor follow-up",
+            value=vendor_body,
+            height=220,
+            key="ai_vendor_follow_up_%s" % packet.case_id,
+        )
+    with internal_tab:
+        st.text_area(
+            "Draft internal note",
+            value=internal_body,
+            height=220,
+            key="ai_internal_note_%s" % packet.case_id,
+        )
+
+    with st.expander("Original packet drafts"):
+        render_drafts(packet)
+
+
+def render_findings(packet, allow_expanders: bool = True) -> None:
     rows = [
         {
             "Function": finding.function,
@@ -523,14 +631,22 @@ def render_findings(packet) -> None:
     st.subheader("All Findings")
     st.dataframe(findings_df, use_container_width=True, hide_index=True)
 
-    with st.expander("Detailed policy rationale"):
-        for function in sorted({finding.function for finding in packet.findings}):
-            st.markdown("**%s**" % function)
-            for finding in [item for item in packet.findings if item.function == function]:
-                st.markdown("- **%s**" % finding.trigger)
-                st.write(finding.why_it_matters)
-                st.caption("Owner: %s | Severity: %s" % (finding.required_owner, finding.severity))
-                st.caption("Policy: %s" % "; ".join(finding.policy_refs))
+    if allow_expanders:
+        with st.expander("Detailed policy rationale"):
+            render_policy_rationale(packet)
+    else:
+        st.subheader("Detailed policy rationale")
+        render_policy_rationale(packet)
+
+
+def render_policy_rationale(packet) -> None:
+    for function in sorted({finding.function for finding in packet.findings}):
+        st.markdown("**%s**" % function)
+        for finding in [item for item in packet.findings if item.function == function]:
+            st.markdown("- **%s**" % finding.trigger)
+            st.write(finding.why_it_matters)
+            st.caption("Owner: %s | Severity: %s" % (finding.required_owner, finding.severity))
+            st.caption("Policy: %s" % "; ".join(finding.policy_refs))
 
 
 def render_evidence(packet) -> None:
@@ -570,7 +686,7 @@ def render_drafts(packet) -> None:
         )
 
 
-def render_trace(packet) -> None:
+def render_trace(packet, allow_expanders: bool = True) -> None:
     rows = [
         {
             "Step": index,
@@ -584,7 +700,11 @@ def render_trace(packet) -> None:
     ]
     st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
 
-    with st.expander("Raw trace JSON"):
+    if allow_expanders:
+        with st.expander("Raw trace JSON"):
+            st.json([entry.model_dump(mode="json") for entry in packet.trace])
+    else:
+        st.subheader("Raw trace JSON")
         st.json([entry.model_dump(mode="json") for entry in packet.trace])
 
 
@@ -852,6 +972,13 @@ def _reviewer_summary(packet) -> str:
     if synthesis and synthesis.validation_status.startswith("passed"):
         return synthesis.executive_summary
     return packet.summary
+
+
+def _draft_body(packet, audience: str) -> str:
+    for draft in packet.drafts:
+        if draft.audience == audience:
+            return draft.body
+    return ""
 
 
 def _summary_html(value: str) -> str:

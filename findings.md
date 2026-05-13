@@ -43,3 +43,10 @@
 - First live smoke showed a realistic risk: even with structured output, the model may paraphrase required missing-item labels. Exact-label preservation is important because the packet is used for procurement follow-up.
 - The implemented fix is to require exact missing item labels, set temperature to 0, validate the output, and fall back to deterministic synthesis if validation fails.
 - Deployment still needs Streamlit secrets for live synthesis. The repository must not commit `.env.local` or any plaintext key.
+
+## 2026-05-13 Action Cockpit UX Findings
+
+- The prior case page was still too packet-heavy for a procurement reviewer. It made evidence, workflow, trace, and commercial details easy to inspect, but it did not make the next action obvious enough.
+- The corrected case page starts with the decision, next action, owner, required vendor follow-up, and internal route.
+- OpenAI synthesis now has a visible product role: it powers the reviewer brief and editable AI-assisted draft text while deterministic outputs remain the source of truth.
+- Auditability remains available, but detailed evidence, workflow, trace, and exports are no longer the first thing a user has to parse.

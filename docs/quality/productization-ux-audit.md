@@ -36,9 +36,15 @@ The export buttons were useful for the exam submission but competed with the pri
 - Kept the Drafts acknowledgement checkbox because it gates editing and therefore has a real effect; subject and body are both disabled until acknowledgement.
 - Added regression coverage so missing-info actions are not rendered as checkboxes.
 
+## Follow-Up Action Cockpit Pass
+
+The next product issue was that the case page still exposed too much packet detail before making the reviewer's job clear. The page now starts with an `Action Cockpit` that shows the decision, next action, and owner. The case page then shows the reviewer brief, required vendor follow-up, internal review route, and editable `AI-Assisted Drafts`.
+
+Detailed policy findings, evidence, workflow, trace, and export controls now live under `Audit details`. This preserves exam traceability without making the primary review path feel like a debug page.
+
 ## Final Assessment
 
-The app now better matches the original exam objective: it produces a structured, evidence-backed recommendation for a human procurement owner. It is still a prototype, but the main path now reads as a review packet instead of a collection of internal implementation artifacts.
+The app now better matches the original exam objective: it produces a structured, evidence-backed recommendation for a human procurement owner. It is still a prototype, but the main path now reads as a decision-and-draft workflow instead of a collection of internal implementation artifacts.
 
 ## Verification
 
@@ -46,7 +52,7 @@ The app now better matches the original exam objective: it produces a structured
 - `python3 -m pytest -q` passed: 30 tests after the synthesis follow-up pass.
 - `python3 -m vendor_agent.cli eval` passed: 3/3 cases.
 - Local Streamlit browser smoke passed for dashboard, sample-case review, upload landing, and mobile dashboard.
-- Browser checks confirmed the old sidebar mode/human-gate copy is absent, missing-info actions are not rendered as checkboxes, `Required Follow-up`, `Human Review Route`, and `Triage Workflow` are visible, and export controls are collapsed under `Export decision packet`.
+- Browser checks confirmed the old sidebar mode/human-gate copy is absent, missing-info actions are not rendered as checkboxes, `Action Cockpit`, `Required Vendor Follow-up`, `Internal Review Route`, `AI-Assisted Drafts`, and `Audit details` are visible, and the local OpenAI mode renders `Synthesis source: gpt-4o-mini-2024-07-18`.
 - Updated screenshot: `docs/assets/screenshots/productized-sample-case.png`.
 
 Remaining product limitations:

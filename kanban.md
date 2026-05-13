@@ -75,6 +75,7 @@ kanban-plugin: board
 - [x] Add screenshots for README/submission package
 - [x] Assess process-flow PNG and add LLM-ready reviewer synthesis
 - [x] Add optional live OpenAI synthesis with fail-closed validation
+- [x] Rework case page into action-first review cockpit
 
 %% kanban:settings
 ```
