@@ -1,6 +1,6 @@
 # Sample Upload Packets
 
-These synthetic packets are for testing the Streamlit `Upload package` workflow.
+These synthetic packets are for testing the Streamlit `Triage new package` workflow.
 Each folder has the loose files a reviewer might upload. The `zips/` folder has
 one zip per packet for faster manual testing.
 
@@ -24,6 +24,10 @@ The packets are based on the original prompt and policy docs:
 - `high_risk_ai_with_support_artifacts`: TalentPulse AI with DPA, SOC 2,
   AI opt-out, incident response, and a more complete questionnaire. It should
   still require human review because it remains high risk and over budget.
+- `net_new_supportflow_complete`: net-new SupportFlow Assist customer support
+  SaaS package with DPA, SOC 2, subprocessor, and AI training opt-out artifacts.
+  It should have no matching sample baseline and should remain review-required
+  because it handles customer data and internal integrations.
 - `guardrail_prompt_injection_email`: valid required files with a malicious
   vendor email asking the agent to bypass approvals.
 - `guardrail_policy_doc_decoy_incomplete`: missing the security questionnaire

@@ -1,0 +1,2 @@
+SupportFlow confirms customer data is not used for model training,
+benchmarking, product analytics, or service improvement for this account.

@@ -102,13 +102,13 @@ Sidebar
   Workspace selector
     Dashboard
     Review sample case
-    Upload package
+    Triage new package
   Case selector or uploader by workspace
 
 Main
   Header: Vendor Onboarding Triage
   Dashboard: vendor case queue
-  Detail: status banner
+  Upload detail: package delta for matched baseline or net-new vendor
   Status banner
   Key metrics row
   Required follow-up panel

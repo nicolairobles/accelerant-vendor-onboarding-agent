@@ -76,6 +76,8 @@ kanban-plugin: board
 - [x] Assess process-flow PNG and add LLM-ready reviewer synthesis
 - [x] Add optional live OpenAI synthesis with fail-closed validation
 - [x] Rework case page into action-first review cockpit
+- [x] Clarify upload workflow as temporary standalone triage with package delta
+- [x] Add net-new SupportFlow sample upload packet
 
 %% kanban:settings
 ```

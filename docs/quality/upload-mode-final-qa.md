@@ -27,7 +27,7 @@ Policy docs and mock internal-system data still come from the bundled candidate 
 ## Issues Found And Fixed
 
 1. The previous app could only run bundled sample cases.
-   - Fixed by adding `vendor_agent/uploads.py` and a Streamlit `Upload package` mode.
+   - Fixed by adding `vendor_agent/uploads.py` and a Streamlit `Triage new package` mode.
 
 2. The pipeline required canonical case filenames.
    - Fixed by staging uploaded files as `uploaded_case_<required_suffix>` before calling `run_case()`.

@@ -1,0 +1,5 @@
+From: account-manager@supportflow.example
+Subject: SupportFlow Assist onboarding packet
+
+Attached are the intake workbook, quote, contract excerpt, security questionnaire,
+SOC 2 marker, DPA, and subprocessor list for procurement review.

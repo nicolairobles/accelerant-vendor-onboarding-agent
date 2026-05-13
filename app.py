@@ -82,7 +82,7 @@ def main() -> None:
     with st.sidebar:
         workspace = st.radio(
             "Workspace",
-            ["Dashboard", "Review sample case", "Upload package"],
+            ["Dashboard", "Review sample case", "Triage new package"],
         )
 
     if workspace == "Dashboard":
@@ -102,7 +102,7 @@ def main() -> None:
             render_packet(packet)
     else:
         uploaded_files = st.sidebar.file_uploader(
-            "Vendor package files",
+            "New package files",
             type=["xlsx", "csv", "pdf", "md", "txt", "zip"],
             accept_multiple_files=True,
             help=(
@@ -110,12 +110,14 @@ def main() -> None:
                 "questionnaire, vendor email, and optional support artifacts."
             ),
         )
+        st.sidebar.caption("Uploads create a temporary standalone case. They do not modify sample cases.")
         st.sidebar.caption("Required: intake workbook, quote CSV, contract PDF, security questionnaire, vendor email.")
         st.sidebar.caption("Optional: DPA, SOC 2, subprocessors, tax form, vendor setup form, AI opt-out confirmation.")
-        run_clicked = st.sidebar.button("Run uploaded package", type="primary", use_container_width=True)
+        run_clicked = st.sidebar.button("Run new package", type="primary", use_container_width=True)
         _run_uploaded_case(uploaded_files, run_clicked)
         packet = st.session_state.get("packet")
         if packet and st.session_state.get("input_mode") == workspace:
+            render_package_delta(packet, st.session_state.get("uploaded_case"))
             render_packet(packet)
             render_upload_details(st.session_state.get("uploaded_case"))
         else:
@@ -212,18 +214,18 @@ def _run_uploaded_case(uploaded_files, run_clicked: bool) -> None:
         except Exception as exc:
             st.session_state["packet"] = None
             st.session_state["packet_context"] = "upload:error"
-            st.session_state["input_mode"] = "Upload package"
+            st.session_state["input_mode"] = "Triage new package"
             st.session_state["upload_feedback"] = {
-                "error": "Upload package could not be prepared: %s" % exc,
+                "error": "New package could not be prepared: %s" % exc,
                 "warnings": [],
             }
-            status.update(label="Upload package could not be prepared", state="error")
+            status.update(label="New package could not be prepared", state="error")
             return
         if not uploaded_case.is_ready:
             st.session_state["packet"] = None
             st.session_state["uploaded_case"] = uploaded_case
             st.session_state["packet_context"] = "upload:incomplete"
-            st.session_state["input_mode"] = "Upload package"
+            st.session_state["input_mode"] = "Triage new package"
             errors = list(uploaded_case.blocking_errors)
             if uploaded_case.missing_roles:
                 errors.append(
@@ -231,7 +233,7 @@ def _run_uploaded_case(uploaded_files, run_clicked: bool) -> None:
                     % ", ".join(missing_role_labels(uploaded_case.missing_roles))
                 )
             st.session_state["upload_feedback"] = {
-                "error": " ".join(errors) or "Upload package is not complete enough for triage.",
+                "error": " ".join(errors) or "New package is not complete enough for triage.",
                 "warnings": (
                     ["Unmatched files: %s." % ", ".join(uploaded_case.unmatched_files)]
                     if uploaded_case.unmatched_files
@@ -239,14 +241,14 @@ def _run_uploaded_case(uploaded_files, run_clicked: bool) -> None:
                 )
                 + uploaded_case.warnings,
             }
-            status.update(label="Upload package incomplete", state="error")
+            status.update(label="New package incomplete", state="error")
             return
         status.update(label="Running triage", state="running")
         packet = run_case(uploaded_case.case_dir)
         st.session_state["packet"] = packet
         st.session_state["uploaded_case"] = uploaded_case
         st.session_state["packet_context"] = "upload:%s" % packet.case_id
-        st.session_state["input_mode"] = "Upload package"
+        st.session_state["input_mode"] = "Triage new package"
         st.session_state["upload_feedback"] = None
         status.update(label="Triage complete", state="complete")
 
@@ -458,7 +460,7 @@ def render_exports(packet) -> None:
 def render_upload_details(uploaded_case) -> None:
     if not uploaded_case:
         return
-    with st.expander("Uploaded package mapping"):
+    with st.expander("Staged package mapping"):
         role_matches = getattr(uploaded_case, "role_matches", [])
         optional_matches = getattr(uploaded_case, "optional_matches", [])
         warnings = getattr(uploaded_case, "warnings", [])
@@ -491,6 +493,76 @@ def render_upload_details(uploaded_case) -> None:
             st.caption("Ignored files: %s" % ", ".join(unmatched_files))
 
 
+def render_package_delta(packet, uploaded_case) -> None:
+    if not uploaded_case:
+        return
+    st.subheader("Package Delta")
+    st.caption(
+        "This is a temporary standalone triage run. Uploaded files do not change the locked sample cases."
+    )
+
+    baseline_id, baseline_packet = _matching_sample_baseline(packet)
+    required_count = len(getattr(uploaded_case, "role_matches", []))
+    support_count = len(getattr(uploaded_case, "optional_matches", []))
+    remaining_blockers = len([finding for finding in packet.findings if finding.severity == "blocker"])
+
+    cols = st.columns(4)
+    cols[0].metric("Required files", required_count)
+    cols[1].metric("Support artifacts", support_count)
+    cols[2].metric("Remaining requests", len(packet.missing_information))
+    cols[3].metric("Remaining blockers", remaining_blockers)
+
+    if baseline_packet:
+        resolved = _resolved_missing_items(baseline_packet, packet)
+        st.write("Matched baseline: %s - %s." % (baseline_id, baseline_packet.facts.vendor_name))
+        if resolved:
+            st.success("Resolved since baseline: %s." % "; ".join(resolved))
+        else:
+            st.info("No baseline missing-information items were resolved by this upload.")
+    else:
+        st.info("No matching sample baseline found; treating this as a net-new vendor package.")
+
+    required_rows = [
+        {
+            "Role": match.role.replace("_", " ").title(),
+            "Uploaded file": match.uploaded_name,
+            "Staged as": match.staged_name,
+        }
+        for match in getattr(uploaded_case, "role_matches", [])
+    ]
+    support_rows = [
+        {
+            "Artifact": _artifact_label(match.role),
+            "Uploaded file": match.uploaded_name,
+            "Staged as": match.staged_name,
+        }
+        for match in getattr(uploaded_case, "optional_matches", [])
+    ]
+
+    delta_tab, files_tab = st.tabs(["Review delta", "Uploaded files"])
+    with delta_tab:
+        if packet.missing_information:
+            st.markdown("**Still needed**")
+            st.dataframe(_missing_rows(packet), use_container_width=True, hide_index=True)
+        else:
+            st.success("No missing information remains.")
+        blocker_rows = _blocker_rows(packet)
+        if blocker_rows:
+            st.markdown("**Remaining blockers**")
+            st.dataframe(pd.DataFrame(blocker_rows), use_container_width=True, hide_index=True)
+        else:
+            st.success("No blocking findings remain.")
+    with files_tab:
+        if required_rows:
+            st.markdown("**Required files used for this temporary case**")
+            st.dataframe(pd.DataFrame(required_rows), use_container_width=True, hide_index=True)
+        if support_rows:
+            st.markdown("**Support artifacts recognized**")
+            st.dataframe(pd.DataFrame(support_rows), use_container_width=True, hide_index=True)
+        if not required_rows and not support_rows:
+            st.write("No uploaded files were staged.")
+
+
 def render_upload_feedback() -> None:
     feedback = st.session_state.get("upload_feedback")
     if not feedback:
@@ -501,8 +573,11 @@ def render_upload_feedback() -> None:
 
 
 def render_upload_landing() -> None:
-    st.subheader("New Vendor Package")
-    st.info("Upload a vendor package and run triage to produce a decision packet.")
+    st.subheader("Triage New Package")
+    st.info(
+        "Upload a complete vendor package to create a temporary standalone case. "
+        "This does not add files to any sample case."
+    )
     expected = pd.DataFrame(
         [
             {"Role": "Intake", "Required": True, "Accepted": ".xlsx"},
@@ -726,6 +801,34 @@ def _case_queue_row(case_id: str, packet) -> dict:
     }
 
 
+def _matching_sample_baseline(packet):
+    uploaded_vendor = _normalize_vendor_name(packet.facts.vendor_name)
+    for case_id in CASE_OPTIONS:
+        baseline = _run_sample_case_cached(case_id, _synthesis_runtime_signature())
+        if _normalize_vendor_name(baseline.facts.vendor_name) == uploaded_vendor:
+            return case_id, baseline
+    return None, None
+
+
+def _resolved_missing_items(baseline_packet, uploaded_packet) -> list:
+    baseline_missing = {item.item for item in baseline_packet.missing_information}
+    uploaded_missing = {item.item for item in uploaded_packet.missing_information}
+    return sorted(baseline_missing - uploaded_missing)
+
+
+def _blocker_rows(packet) -> list:
+    return [
+        {
+            "Function": finding.function,
+            "Issue": finding.trigger,
+            "Owner": finding.required_owner,
+            "Action": finding.recommended_action,
+        }
+        for finding in packet.findings
+        if finding.severity == "blocker"
+    ]
+
+
 def _next_owner(packet) -> str:
     if packet.missing_information:
         return packet.missing_information[0].owner
@@ -932,6 +1035,10 @@ def _missing_rows(packet) -> pd.DataFrame:
 
 def _money(value: float) -> str:
     return "$%s" % format(value, ",.0f")
+
+
+def _normalize_vendor_name(value: str) -> str:
+    return (value or "").lower().replace(",", "").replace(".", "").strip()
 
 
 def _markdown_brief(packet) -> str:

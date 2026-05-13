@@ -10,7 +10,7 @@ Covered areas:
 
 - Dashboard-first Streamlit homepage.
 - Sample case review workspace.
-- Uploaded package workspace.
+- Triage new package workspace.
 - Triage workflow panel.
 - XLSX triage workbook export.
 - Upload role matching, optional support-artifact handling, and edge-case guardrails.
@@ -50,9 +50,9 @@ Browser smoke:
 - Started Streamlit locally at `http://127.0.0.1:8501`.
 - Verified dashboard homepage renders `Vendor Case Queue` and `Queue Priorities`.
 - Verified review workspace renders TalentPulse AI with `Triage Workflow` and triage workbook export.
-- Verified upload workspace renders `New Vendor Package` and file uploader.
+- Verified upload workspace renders `Triage New Package` and file uploader.
 - Refreshed README screenshots for dashboard, sample case workflow, and upload workspace.
-- Added generated sample upload packets and zips for valid low-risk, high-risk support-doc, prompt-injection, policy-doc decoy, mixed-vendor, and malformed quote scenarios.
+- Added generated sample upload packets and zips for valid low-risk, high-risk support-doc, net-new support SaaS, prompt-injection, policy-doc decoy, mixed-vendor, and malformed quote scenarios.
 - Verified sample packets with `tests/test_sample_upload_packets.py`.
 
 ## Issue Found And Fixed

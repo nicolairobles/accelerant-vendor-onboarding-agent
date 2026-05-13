@@ -67,3 +67,6 @@
 - Added a non-secret synthesis runtime signature to Streamlit sample-case caches so switching deployed secrets from deterministic to OpenAI forces fresh packets.
 - Re-verified action cockpit changes: compile passed, 32 pytest tests passed, eval passed 3/3, whitespace check passed, and local browser smoke confirmed OpenAI synthesis source, AI-assisted drafts, audit disclosure, and no secrets warning.
 - Pushed action cockpit and cache-key fixes to `main`; deployed Chrome smoke confirmed the action cockpit and live OpenAI synthesis source after Streamlit secrets were configured.
+- Clarified upload product model: `Triage new package` now creates a temporary standalone case and does not mutate locked sample cases.
+- Added `Package Delta` for uploaded cases so matched baselines, resolved requests, recognized support artifacts, remaining requests, and remaining blockers are visible before the full case detail.
+- Added a net-new `SupportFlow Assist` sample upload packet with DPA, SOC 2, subprocessor, and AI training opt-out artifacts to test the no-baseline path.

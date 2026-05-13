@@ -27,6 +27,7 @@ Current artifacts:
 - `docs/quality/dashboard-upload-guardrail-qa.md` - QA notes for the dashboard, process-flow, workbook, and upload guardrail pass.
 - `docs/quality/productization-ux-audit.md` - QA notes for the reviewer-facing UX cleanup.
 - `docs/quality/png-workflow-and-synthesis-assessment.md` - assessment of the provided process-flow PNG and the synthesis boundary.
+- `docs/quality/upload-workflow-delta-qa.md` - QA notes for the temporary upload-case model and package delta.
 - `AGENTS.md` - repo-local AI coding guardrails.
 - `kanban.md` - Obsidian Kanban board for build work.
 - `task_plan.md`, `findings.md`, `progress.md` - persistent planning memory for longer AI-assisted sessions.
@@ -65,7 +66,9 @@ The Streamlit app also supports an uploaded single-vendor package. Upload either
 - security questionnaire (`.md`)
 - vendor email (`.txt`)
 
-Uploaded files are staged temporarily and run through the same deterministic pipeline as the sample cases. Upload mode also recognizes optional support artifacts such as DPA, SOC 2, subprocessor list, tax form, vendor setup form, and AI training opt-out confirmation. Ambiguous or mixed-vendor packages are blocked before triage.
+Uploaded files create a temporary standalone triage case. They do not add files to or mutate the locked sample cases. The app shows a `Package Delta` before the full case details so reviewers can see whether the upload matched a sample baseline, which support artifacts were recognized, what requests were resolved, and what blockers remain.
+
+Upload mode also recognizes optional support artifacts such as DPA, SOC 2, subprocessor list, tax form, vendor setup form, and AI training opt-out confirmation. Ambiguous or mixed-vendor packages are blocked before triage.
 
 ## Sample Upload Packets
 
@@ -73,6 +76,7 @@ Use the zips under `data/sample-upload-packets/zips/` to test upload mode:
 
 - `valid_low_risk_ops_complete.zip`
 - `high_risk_ai_with_support_artifacts.zip`
+- `net_new_supportflow_complete.zip`
 - `guardrail_prompt_injection_email.zip`
 - `guardrail_policy_doc_decoy_incomplete.zip`
 - `invalid_mixed_vendor_case_prefixes.zip`
@@ -101,7 +105,7 @@ The CLI writes:
 5. Use `AI-Assisted Drafts` for editable vendor follow-up and internal note text. These drafts still require human approval before use.
 6. Open `Audit details` only when you need supporting commercial context, policy findings, evidence, workflow, trace, or exports.
 7. In `Audit details`, use `Exports` to download JSON, trace, Markdown brief, or the XLSX triage workbook.
-8. Switch to `Upload package` to test a new vendor package. Upload either five files or one zip containing an intake workbook, quote CSV, contract PDF, security questionnaire, and vendor email. Optional support artifacts are mapped separately and reflected in the staged checklist.
+8. Switch to `Triage new package` to test a new vendor package. Upload either five files or one zip containing an intake workbook, quote CSV, contract PDF, security questionnaire, and vendor email. Optional support artifacts are mapped separately and reflected in the staged checklist. Use `high_risk_ai_with_support_artifacts.zip` to see a matched TalentPulse baseline delta, or `net_new_supportflow_complete.zip` to see a net-new vendor with no sample baseline.
 
 ## Screenshots
 

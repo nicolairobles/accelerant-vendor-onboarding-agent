@@ -1,0 +1,2 @@
+line_item,billing_type,quantity,unit_price,annual_amount,one_time_amount,notes
+SupportFlow Assist annual subscription,annual,1,18000,18000,0,Includes Zendesk and Slack integrations.

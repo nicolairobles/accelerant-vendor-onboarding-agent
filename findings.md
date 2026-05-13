@@ -50,3 +50,10 @@
 - The corrected case page starts with the decision, next action, owner, required vendor follow-up, and internal route.
 - OpenAI synthesis now has a visible product role: it powers the reviewer brief and editable AI-assisted draft text while deterministic outputs remain the source of truth.
 - Auditability remains available, but detailed evidence, workflow, trace, and exports are no longer the first thing a user has to parse.
+
+## 2026-05-13 Upload Workflow Product Findings
+
+- The previous upload interaction created a temporary `uploaded_case`, but the UI did not make that model explicit enough. A reviewer could reasonably assume uploading TalentPulse artifacts would augment the locked TalentPulse sample case.
+- The corrected product model is: sample cases are immutable references; uploads create a scratch triage case that can optionally be compared to a matching sample baseline by vendor name.
+- The uploaded-case page should show the delta before the full review cockpit because the reviewer's first question is whether the new files resolved anything or introduced new blockers.
+- Upload QA needs both baseline-matched packets and net-new packets. The new SupportFlow Assist packet covers the no-baseline path and tests DPA, SOC 2, subprocessor, and AI training opt-out recognition against data-handling policy expectations.

@@ -48,6 +48,30 @@ def test_sample_high_risk_support_packet_resolves_document_requests(tmp_path):
     assert packet.facts.budget.status == "insufficient"
 
 
+def test_sample_net_new_supportflow_packet_runs_without_sample_baseline(tmp_path):
+    uploaded_case = stage_zip("net_new_supportflow_complete.zip", tmp_path)
+
+    assert uploaded_case.is_ready
+    assert {match.role for match in uploaded_case.optional_matches} >= {
+        "ai_training_opt_out",
+        "data_processing_agreement",
+        "soc2_type2",
+        "subprocessor_list",
+    }
+
+    packet = run_case(uploaded_case.case_dir)
+    missing = {item.item for item in packet.missing_information}
+
+    assert packet.facts.vendor_name == "SupportFlow Assist"
+    assert packet.status == "review_required"
+    assert packet.facts.budget.status == "sufficient"
+    assert packet.facts.duplicate_vendor.matched is False
+    assert packet.facts.risk.tier == "medium"
+    assert "Data Processing Agreement" not in missing
+    assert "SOC 2 Type II report or equivalent security attestation" not in missing
+    assert "Data-use opt-out or service-improvement disablement confirmation" not in missing
+
+
 def test_sample_prompt_injection_packet_preserves_human_gate(tmp_path):
     uploaded_case = stage_zip("guardrail_prompt_injection_email.zip", tmp_path)
 
