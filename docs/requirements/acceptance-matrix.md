@@ -24,8 +24,10 @@ This matrix defines how we know each requirement is actually satisfied.
 | REQ-018 | Upload package tests | `tests/test_upload_mode.py`, Streamlit smoke test | Multiple files and zip upload stage to canonical case format; missing required files are reported before triage; optional support docs are mapped. | Verified |
 | REQ-019 | Dashboard regression test | `tests/test_streamlit_app.py` | App home renders a pending case queue with status, risk, spend, missing-info, blocker, and next-owner fields. | Verified |
 | REQ-020 | Upload guardrail regression tests | `tests/test_upload_mode.py` | Policy docs are not misclassified as questionnaires; corrupt quote CSV is rejected; mixed-vendor zip is blocked; prompt injection does not bypass human gate; optional artifacts resolve matching checklist items. | Verified |
-| REQ-021 | Workflow/workbook export tests | `tests/test_streamlit_app.py` | Case view includes agent workflow progress and workbook export contains Summary, Missing Info, Findings, Approval Route, and Trace sheets. | Verified |
+| REQ-021 | Workflow/workbook export tests | `tests/test_streamlit_app.py` | Case view includes triage workflow progress and workbook export contains Summary, Missing Info, Findings, Approval Route, and Trace sheets. | Verified |
 | REQ-022 | Sample upload packet tests | `tests/test_sample_upload_packets.py`, `data/sample-upload-packets/README.md` | Valid sample packets run as expected; invalid/guardrail sample packets are blocked or remain human-gated; zips are available for manual app testing. | Verified |
+| REQ-023 | Productized reviewer UX test | `tests/test_streamlit_app.py`, `docs/quality/productization-ux-audit.md` | Sidebar has no implementation-mode copy; missing-info follow-up is not rendered as inert checkboxes; dashboard uses queue-wide Open Requests; case view shows Required Follow-up, Human Review Route, and Triage Workflow. | Verified |
+| REQ-024 | Synthesis guardrail tests | `tests/test_synthesis.py`, `tests/test_streamlit_app.py`, `docs/quality/png-workflow-and-synthesis-assessment.md` | Reviewer synthesis is generated from structured packet fields, cites known evidence IDs, preserves missing information, avoids prohibited action language, appears in the UI, and is exported in the workbook. | Verified |
 
 ## Verification Tiers
 

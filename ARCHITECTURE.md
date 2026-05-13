@@ -33,6 +33,7 @@ case package
 | `vendor_agent.schemas` | Defines the product contract for evidence, facts, findings, approval route, drafts, trace, and decision packet. |
 | `vendor_agent.tools` | Implements deterministic tool-like checks: budget lookup, duplicate vendor lookup, TCV calculation, and risk classification. |
 | `vendor_agent.policies` | Applies deterministic procurement, finance, legal, security, and vendor-risk rules. |
+| `vendor_agent.synthesis` | Creates a reviewer-facing synthesis bundle from the validated decision packet and defines the future LLM payload boundary. |
 | `vendor_agent.tracing` | Records workflow steps, inputs, outputs, timing, requirement IDs, and evidence IDs. |
 | `vendor_agent.pipeline` | Orchestrates one case into a `DecisionPacket`. |
 | `vendor_agent.evaluator` | Runs all seeded cases against expected baselines. |
@@ -57,6 +58,8 @@ The current prototype uses deterministic code for:
 
 An LLM can be added later for concise summaries or better draft wording, but only after deterministic facts and policy outputs exist. Model output should validate against the same schemas and must not override policy checks.
 
+The current implementation includes an LLM-ready synthesis contract but no live model dependency. `SynthesisBundle` is generated from the validated `DecisionPacket`, validates cited evidence IDs and prohibited action language, and can be replaced by an optional provider call later.
+
 ## Decision Packet Contract
 
 Each run emits:
@@ -65,6 +68,7 @@ Each run emits:
 - `status`
 - `status_reason`
 - `summary`
+- `synthesis`
 - normalized `facts`
 - `missing_information`
 - policy `findings`
@@ -152,8 +156,10 @@ The case detail page is scan-first:
 
 - status banner
 - key metrics
-- next actions
-- required human route
-- agent workflow stages matching the provided process-flow image
+- required follow-up with owner, reason, and evidence
+- human review route with explicit guardrails
+- triage workflow stages matching the provided process-flow image
 - tabbed Overview, Findings, Evidence, Drafts, and Trace
 - export controls for JSON, trace, Markdown brief, and XLSX triage workbook
+
+The UI intentionally keeps implementation details out of the primary review path. Function calls remain available in the trace and workflow disclosure, while the visible case page uses procurement language and avoids nonfunctional controls.

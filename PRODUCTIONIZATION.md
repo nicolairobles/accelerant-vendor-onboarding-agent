@@ -90,7 +90,9 @@ Production should enforce:
 
 ## LLM Addition Path
 
-If an LLM is added, it should be limited to:
+The current prototype includes an LLM-ready synthesis contract and deterministic fallback. A live LLM provider can be added behind that contract later.
+
+If a live LLM is added, it should be limited to:
 
 - concise summary phrasing
 - draft vendor follow-up
@@ -111,6 +113,7 @@ Implementation guardrails:
 - pass only normalized facts/evidence, not arbitrary raw documents where possible
 - require structured output
 - validate output with Pydantic
+- validate cited evidence IDs against the packet
 - reject outputs that contain approval/send/commitment language
 - compare output quality with evals before switching models or prompts
 
@@ -130,7 +133,7 @@ Current deployment:
 
 - Streamlit app: https://accelerant-vendor-app-agent-5rcbcuzjbmdlpyenpfeay9.streamlit.app/
 - Repository: private GitHub repository under `nicolairobles/accelerant-vendor-onboarding-agent`
-- No secrets are required for the deterministic build.
+- No secrets are required for the deterministic build or the current synthesis fallback.
 - Reviewer access should be validated from a clean browser or intended reviewer account before final submission.
 
 Production deployment:
@@ -150,5 +153,5 @@ Production deployment:
 - Policy logic is Python-coded rather than managed through a policy admin surface.
 - Streamlit is acceptable for the take-home but not the final enterprise workflow UI.
 - Eval dataset has three cases only.
-- No LLM synthesis is included yet.
+- Reviewer synthesis is currently deterministic and LLM-ready, not live model-backed.
 - No external system writes are implemented, by design.

@@ -14,7 +14,7 @@ def test_streamlit_app_renders_dashboard_homepage():
     assert any("Vendor Onboarding Triage" in item.value for item in app.title)
     assert any("Vendor Case Queue" in item.value for item in app.subheader)
     assert any("Queue Priorities" in item.value for item in app.subheader)
-    assert any("Missing Items" in item.label for item in app.metric)
+    assert any("Open Requests" in item.label for item in app.metric)
 
 
 def test_streamlit_app_switches_to_low_risk_case():
@@ -28,7 +28,11 @@ def test_streamlit_app_switches_to_low_risk_case():
     assert not app.exception
     assert any("Workspace Depot" in item.value for item in app.markdown)
     assert any("Low" in item.value for item in app.metric)
-    assert any("Agent Workflow" in item.value for item in app.subheader)
+    assert any("Required Follow-up" in item.value for item in app.subheader)
+    assert any("Human Review Route" in item.value for item in app.subheader)
+    assert any("Triage Workflow" in item.value for item in app.subheader)
+    assert any("Reviewer Brief" in item.value for item in app.subheader)
+    assert not any("Updated tax form" in checkbox.label for checkbox in app.checkbox)
 
 
 def test_markdown_brief_contains_review_packet_sections():
@@ -38,6 +42,7 @@ def test_markdown_brief_contains_review_packet_sections():
     brief = _markdown_brief(packet)
 
     assert "# TalentPulse AI Vendor Triage Brief" in brief
+    assert "## Reviewer Brief" in brief
     assert "## Missing Information" in brief
     assert "## Required Human Route" in brief
     assert "## Findings" in brief
@@ -51,5 +56,6 @@ def test_triage_workbook_export_contains_packet_sheets():
     workbook_bytes = _triage_workbook_bytes(packet)
     wb = load_workbook(BytesIO(workbook_bytes), read_only=True)
 
-    assert {"Summary", "Missing Info", "Findings", "Approval Route", "Trace"} <= set(wb.sheetnames)
+    assert {"Summary", "Missing Info", "Findings", "Approval Route", "Trace", "Synthesis"} <= set(wb.sheetnames)
     assert wb["Summary"]["B2"].value == "TalentPulse AI"
+    assert wb["Synthesis"]["B3"].value == "passed"

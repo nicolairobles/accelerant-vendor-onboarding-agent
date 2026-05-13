@@ -54,11 +54,6 @@ def main() -> None:
             "Workspace",
             ["Dashboard", "Review sample case", "Upload package"],
         )
-        st.divider()
-        st.caption("Mode")
-        st.write("Deterministic policy workflow")
-        st.caption("Human gate")
-        st.write("No approvals, sends, spend commitments, or legal acceptance.")
 
     if workspace == "Dashboard":
         st.session_state["input_mode"] = "Dashboard"
@@ -120,10 +115,8 @@ def render_dashboard() -> None:
     metric_cols[0].metric("Cases", len(packets))
     metric_cols[1].metric("Blocked", blocked_count)
     metric_cols[2].metric("High Risk", high_risk_count)
-    metric_cols[3].metric("Missing Items", missing_count)
-    st.caption(
-        "Missing Items is the total count of unresolved document or answer requests across the sample case queue."
-    )
+    metric_cols[3].metric("Open Requests", missing_count)
+    st.caption("Open Requests is queue-wide across all sample cases, not an additional case count.")
 
     st.dataframe(
         pd.DataFrame(rows),
@@ -146,7 +139,7 @@ def render_dashboard() -> None:
             -len(item.missing_information),
         ),
     ):
-        top_action = _next_actions(packet)[0] if _next_actions(packet) else "Ready for routine routing"
+        top_action = _primary_next_action(packet)
         st.write(
             "**%s**: %s. Next: %s."
             % (packet.facts.vendor_name, _status_label(packet), top_action)
@@ -246,45 +239,13 @@ def render_packet(packet) -> None:
 
     action_col, route_col = st.columns([1.2, 1])
     with action_col:
-        st.subheader("Next Actions")
-        actions = _next_actions(packet)
-        if actions:
-            for action in actions:
-                st.checkbox(action, value=False, key="action_%s_%s" % (packet.case_id, action))
-        else:
-            st.write("No blockers detected.")
+        render_required_follow_up(packet)
 
     with route_col:
-        st.subheader("Required Human Route")
-        for index, reviewer in enumerate(packet.approval_route.required_reviewers, start=1):
-            st.write("%s. %s" % (index, reviewer))
+        render_human_route(packet)
 
     render_workflow_progress(packet)
-
-    st.download_button(
-        "Download JSON packet",
-        data=json.dumps(packet.model_dump(mode="json"), indent=2, sort_keys=True),
-        file_name="%s_decision_packet.json" % packet.case_id,
-        mime="application/json",
-    )
-    st.download_button(
-        "Download trace",
-        data=json.dumps([entry.model_dump(mode="json") for entry in packet.trace], indent=2, sort_keys=True),
-        file_name="%s_trace.json" % packet.case_id,
-        mime="application/json",
-    )
-    st.download_button(
-        "Download Markdown brief",
-        data=_markdown_brief(packet),
-        file_name="%s_brief.md" % packet.case_id,
-        mime="text/markdown",
-    )
-    st.download_button(
-        "Download triage workbook",
-        data=_triage_workbook_bytes(packet),
-        file_name="%s_triage_workbook.xlsx" % packet.case_id,
-        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    )
+    render_exports(packet)
 
     overview_tab, findings_tab, evidence_tab, drafts_tab, trace_tab = st.tabs(
         ["Overview", "Findings", "Evidence", "Drafts", "Trace"]
@@ -343,19 +304,85 @@ def render_workflow_progress(packet) -> None:
         ),
         _workflow_row(
             "Prepare outputs",
-            ["draft_human_review_messages"],
+            ["draft_human_review_messages", "prepare_reviewer_synthesis"],
             trace_tools,
-            "Decision packet, drafts, trace, brief, and workbook exports are available.",
+            "Decision packet, reviewer brief, drafts, trace, and workbook exports are available.",
         ),
         {
             "Stage": "Human approval gate",
             "Status": "Required",
-            "Tool calls": "human_review",
-            "Outcome": "Procurement owner reviews, edits, approves, or rejects.",
+            "Function calls": "human_review",
+            "Result": "Procurement owner reviews, edits, approves, or rejects.",
         },
     ]
-    st.subheader("Agent Workflow")
-    st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
+    workflow_df = pd.DataFrame(rows)
+    st.subheader("Triage Workflow")
+    st.dataframe(
+        workflow_df[["Stage", "Status", "Result"]],
+        use_container_width=True,
+        hide_index=True,
+    )
+    with st.expander("Function calls captured in trace"):
+        st.dataframe(
+            workflow_df[["Stage", "Function calls"]],
+            use_container_width=True,
+            hide_index=True,
+        )
+
+
+def render_required_follow_up(packet) -> None:
+    st.subheader("Required Follow-up")
+    rows = _review_action_rows(packet)
+    if not rows:
+        st.success("No missing information or blocking follow-up detected.")
+        return
+    for index, row in enumerate(rows, start=1):
+        st.markdown("**%s. %s**" % (index, row["Action"]))
+        st.caption("Owner: %s | Evidence: %s" % (row["Owner"], row["Evidence"] or "n/a"))
+        st.write(row["Why"])
+
+
+def render_human_route(packet) -> None:
+    st.subheader("Human Review Route")
+    st.caption("Routing recommendation only. No approval, spend commitment, or external send has occurred.")
+    for index, reviewer in enumerate(packet.approval_route.required_reviewers, start=1):
+        st.write("%s. %s" % (index, reviewer))
+    with st.expander("Guardrails enforced"):
+        for action in packet.approval_route.prohibited_actions:
+            st.write("- %s" % action)
+
+
+def render_exports(packet) -> None:
+    with st.expander("Export decision packet"):
+        cols = st.columns(4)
+        cols[0].download_button(
+            "JSON packet",
+            data=json.dumps(packet.model_dump(mode="json"), indent=2, sort_keys=True),
+            file_name="%s_decision_packet.json" % packet.case_id,
+            mime="application/json",
+            use_container_width=True,
+        )
+        cols[1].download_button(
+            "Trace",
+            data=json.dumps([entry.model_dump(mode="json") for entry in packet.trace], indent=2, sort_keys=True),
+            file_name="%s_trace.json" % packet.case_id,
+            mime="application/json",
+            use_container_width=True,
+        )
+        cols[2].download_button(
+            "Markdown brief",
+            data=_markdown_brief(packet),
+            file_name="%s_brief.md" % packet.case_id,
+            mime="text/markdown",
+            use_container_width=True,
+        )
+        cols[3].download_button(
+            "Workbook",
+            data=_triage_workbook_bytes(packet),
+            file_name="%s_triage_workbook.xlsx" % packet.case_id,
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            use_container_width=True,
+        )
 
 
 def render_upload_details(uploaded_case) -> None:
@@ -420,7 +447,7 @@ def render_upload_landing() -> None:
 
 
 def render_overview(packet) -> None:
-    st.markdown(_summary_html(packet.summary), unsafe_allow_html=True)
+    render_reviewer_brief(packet)
 
     left, right = st.columns(2)
     with left:
@@ -449,6 +476,23 @@ def render_overview(packet) -> None:
         st.dataframe(_missing_rows(packet), use_container_width=True, hide_index=True)
     else:
         st.write("No missing information detected.")
+
+
+def render_reviewer_brief(packet) -> None:
+    st.subheader("Reviewer Brief")
+    synthesis = getattr(packet, "synthesis", None)
+    if not synthesis:
+        st.markdown(_summary_html(packet.summary), unsafe_allow_html=True)
+        return
+    st.markdown(_summary_html(synthesis.executive_summary), unsafe_allow_html=True)
+    st.caption("Built from the validated decision packet. Policy status, risk, budget, and routing remain deterministic.")
+    with st.expander("Synthesis validation"):
+        st.write("Status: %s" % synthesis.validation_status)
+        st.write("Source: structured decision packet only")
+        st.write("Evidence cited: %s" % (", ".join(synthesis.cited_evidence_ids) or "n/a"))
+        if synthesis.validation_errors:
+            for error in synthesis.validation_errors:
+                st.warning(error)
 
 
 def render_findings(packet) -> None:
@@ -512,6 +556,7 @@ def render_drafts(packet) -> None:
             "Subject",
             value=draft.subject,
             key="subject_%s_%s" % (packet.case_id, draft.audience),
+            disabled=not acknowledged,
         )
         st.text_area(
             "Body",
@@ -570,8 +615,8 @@ def _workflow_row(stage: str, tools: list, trace_tools: set, outcome: str) -> di
     return {
         "Stage": stage,
         "Status": status,
-        "Tool calls": ", ".join(tools),
-        "Outcome": outcome,
+        "Function calls": ", ".join(tools),
+        "Result": outcome,
     }
 
 
@@ -610,7 +655,8 @@ def _triage_workbook_bytes(packet) -> bytes:
             ("ACV", packet.facts.annual_contract_value),
             ("TCV", packet.facts.total_contract_value.total_contract_value),
             ("Budget", packet.facts.budget.status),
-            ("Summary", packet.summary),
+            ("Structured summary", packet.summary),
+            ("Reviewer brief", _reviewer_summary(packet)),
         ],
     )
 
@@ -658,6 +704,22 @@ def _triage_workbook_bytes(packet) -> bytes:
             ]
         )
 
+    if getattr(packet, "synthesis", None):
+        synthesis = wb.create_sheet("Synthesis")
+        _append_rows(
+            synthesis,
+            [
+                ("Mode", packet.synthesis.synthesis_mode),
+                ("Model", packet.synthesis.model_name),
+                ("Validation", packet.synthesis.validation_status),
+                ("Executive summary", packet.synthesis.executive_summary),
+                ("Vendor follow-up draft", packet.synthesis.vendor_follow_up_draft),
+                ("Internal note draft", packet.synthesis.internal_note_draft),
+                ("Evidence IDs", ", ".join(packet.synthesis.cited_evidence_ids)),
+                ("Validation errors", "; ".join(packet.synthesis.validation_errors)),
+            ],
+        )
+
     for ws in wb.worksheets:
         for column_cells in ws.columns:
             width = min(max(len(str(cell.value or "")) for cell in column_cells) + 2, 60)
@@ -683,16 +745,50 @@ def _status_label(packet) -> str:
     return "READY"
 
 
-def _next_actions(packet) -> list:
-    actions = [item.item for item in packet.missing_information]
-    if packet.status != "ready_low_risk":
-        actions.extend(
-            [
-                "Review approval route",
-                "Inspect blocker evidence",
-            ]
+def _primary_next_action(packet) -> str:
+    rows = _review_action_rows(packet)
+    if rows:
+        return rows[0]["Action"]
+    return "Route decision packet to required reviewers"
+
+
+def _review_action_rows(packet) -> list:
+    rows = []
+    seen = set()
+
+    for item in packet.missing_information:
+        key = ("missing", item.item, item.owner)
+        if key in seen:
+            continue
+        seen.add(key)
+        rows.append(
+            {
+                "Action": item.item,
+                "Owner": item.owner,
+                "Why": item.why_needed,
+                "Evidence": ", ".join(item.evidence_ids),
+            }
         )
-    return actions[:8]
+
+    for finding in packet.findings:
+        if finding.severity not in {"blocker", "review_required"}:
+            continue
+        if packet.missing_information and finding.trigger == "Required onboarding materials are missing.":
+            continue
+        key = ("finding", finding.recommended_action, finding.required_owner)
+        if key in seen:
+            continue
+        seen.add(key)
+        rows.append(
+            {
+                "Action": finding.recommended_action,
+                "Owner": finding.required_owner,
+                "Why": finding.trigger,
+                "Evidence": ", ".join(finding.evidence_ids),
+            }
+        )
+
+    return rows[:8]
 
 
 def _missing_rows(packet) -> pd.DataFrame:
@@ -729,7 +825,8 @@ def _markdown_brief(packet) -> str:
         "Risk: %s\n\n"
         "ACV: %s\n\n"
         "TCV: %s\n\n"
-        "## Summary\n\n%s\n\n"
+        "## Reviewer Brief\n\n%s\n\n"
+        "## Structured Summary\n\n%s\n\n"
         "## Missing Information\n\n%s\n\n"
         "## Required Human Route\n\n%s\n\n"
         "## Findings\n\n%s\n"
@@ -739,11 +836,19 @@ def _markdown_brief(packet) -> str:
         packet.facts.risk.tier,
         _money(packet.facts.annual_contract_value),
         _money(packet.facts.total_contract_value.total_contract_value),
+        _reviewer_summary(packet),
         packet.summary,
         missing or "None",
         route,
         findings or "None",
     )
+
+
+def _reviewer_summary(packet) -> str:
+    synthesis = getattr(packet, "synthesis", None)
+    if synthesis and synthesis.validation_status == "passed":
+        return synthesis.executive_summary
+    return packet.summary
 
 
 def _summary_html(value: str) -> str:

@@ -78,7 +78,7 @@ Implementation:
 - Draft messages are displayed in editable text areas labeled `Draft - requires human approval`.
 - Buttons say `Copy draft` or `Export packet`, not `Send`.
 - Approval route is shown as "required human route," not "approved."
-- Add a persistent notice in the sidebar: "This prototype does not approve vendors or send external communications."
+- Show human-safety notices only where they affect routing, draft editing, exports, or prohibited actions. Do not use the sidebar for implementation-mode warnings.
 
 Source: candidate package communication policy, plus [NN/g error prevention heuristic](https://www.nngroup.com/articles/ten-usability-heuristics/).
 
@@ -104,9 +104,6 @@ Sidebar
     Review sample case
     Upload package
   Case selector or uploader by workspace
-  Deterministic/LLM mode indicator
-  Human approval notice
-  Export buttons after run
 
 Main
   Header: Vendor Onboarding Triage
@@ -114,9 +111,9 @@ Main
   Detail: status banner
   Status banner
   Key metrics row
-  Next actions panel
-  Approval route panel
-  Agent workflow progress
+  Required follow-up panel
+  Human review route panel
+  Triage workflow progress
   Tabs
     Overview
     Findings
@@ -141,11 +138,11 @@ Main
 |                      | 002      Workspace    Blocked Proc     |
 |                      | 003      TalentPulse  Blocked Finance  |
 |                      +----------------------------------------+
-| Mode                 | Next Actions                           |
-| deterministic + LLM  | 1. Request SOC 2 Type II               |
+|                      | Required Follow-up                    |
+|                      | 1. Request SOC 2 Type II               |
 |                      | 2. Request DPA                         |
-| Human gate           | 3. Confirm AI data-use opt-out         |
-| No approvals/sends   | 4. Review duplicate vendor match       |
+|                      | 3. Confirm AI data-use opt-out         |
+|                      | 4. Review duplicate vendor match       |
 |                      +----------------------------------------+
 | Exports              | Approval Route                         |
 | JSON / MD / Trace    | Business Owner -> Procurement ->       |
@@ -171,8 +168,10 @@ Components:
   - Payment terms
   - Risk tier
 - `Top blockers` list.
-- `Recommended next actions` checklist.
+- `Required follow-up` action list with owner, reason, and evidence.
 - `Approval route` as an ordered list or horizontal stepper-style display.
+- Human guardrails where they affect routing, drafts, or prohibited actions.
+- `Reviewer Brief` generated from the validated packet. If a live LLM is added later, label it and show validation status.
 
 Product rule:
 
@@ -185,14 +184,14 @@ Purpose: answer "what needs attention first?"
 Components:
 
 - Case queue with status, risk, ACV, TCV, budget status, missing-info count, blocker count, and next owner.
-- Queue metrics for total cases, blocked cases, high-risk cases, and open information requests.
+- Queue metrics for total cases, blocked cases, high-risk cases, and queue-wide open information requests.
 - Priority list that turns the first missing item or blocker into the next procurement action.
 
 Product rule:
 
 - The app should not land on a single default case. A single case can be the default only after the reviewer chooses the review workspace.
 
-## Agent Workflow Panel
+## Triage Workflow Panel
 
 Purpose: make the provided process-flow image visible in the running product.
 
@@ -207,6 +206,13 @@ Stages:
 - Human approval gate.
 
 The panel should show stage status and tool names without requiring the reviewer to inspect raw trace JSON.
+
+Product rule:
+
+- Show reviewer-friendly stage status and result by default.
+- Keep raw function/tool names in Trace or behind progressive disclosure.
+- Do not use checkboxes or other controls unless they perform a real action.
+- Treat synthesis as part of output preparation, not as the decision maker.
 
 ## Findings Tab
 

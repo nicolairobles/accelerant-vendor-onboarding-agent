@@ -106,3 +106,15 @@ The app should continue to work without an LLM key. If synthesis is added:
 For the take-home, the deterministic system is the right default. It demonstrates product judgment and production judgment: evidence first, traceability, human-in-the-loop routing, reproducible evals, and no autonomous approvals.
 
 LLM synthesis makes sense as a follow-on enhancement, but only behind the structured validation and eval harness already in the repo.
+
+## 2026-05-13 Implementation Update
+
+The prototype now includes an LLM-ready synthesis layer without requiring a live model call:
+
+- `SynthesisBundle` is part of the structured packet contract.
+- `vendor_agent.synthesis` creates a reviewer brief, vendor follow-up draft, and internal note from the validated `DecisionPacket`.
+- `build_llm_synthesis_payload()` defines the compact structured payload a future LLM provider can receive.
+- The synthesis output validates evidence IDs, preserves missing-information items, and checks for prohibited approval/spend/send language.
+- The Streamlit Overview tab shows a `Reviewer Brief` while keeping deterministic status, risk, budget, findings, evidence, and route visible.
+
+This preserves the recommendation above: the model can improve readability later, but the deterministic packet remains the source of truth.

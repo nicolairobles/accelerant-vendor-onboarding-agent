@@ -35,6 +35,8 @@ Status values:
 | REQ-020 | Upload guardrails and edge-case coverage | Data handling/security policies; reviewer testing risk | Must | Upload staging rejects or warns on incomplete, ambiguous, oversized, mixed-vendor, corrupt, prompt-injection, and misclassified policy-document packages. Optional DPA, SOC 2, setup, tax, subprocessor, and AI opt-out artifacts are mapped explicitly. | Upload regression tests | Verified |
 | REQ-021 | Process-flow and triage workbook outputs | Source package workflow PNG | Must | UI shows the agent process flow stages and exports an XLSX triage workbook with summary, missing info, findings, approval route, and trace. | Streamlit regression test plus workbook content test | Verified |
 | REQ-022 | Reviewer upload sample packets | QA/product demonstration | Must | Repo includes realistic upload packet folders and zips for valid low-risk, high-risk support-doc, prompt-injection, decoy policy-doc, mixed-vendor, and malformed quote scenarios. | Sample packet regression tests plus README walkthrough | Verified |
+| REQ-023 | Productized reviewer UX | Exam: product judgment; Communication Policy; process-flow PNG | Must | Primary UI avoids implementation-mode sidebar copy and fake controls; required follow-up is rendered as actionable owner/reason/evidence rows; dashboard counts are clear; human guardrails and exports appear only where they support the review task. | Streamlit regression test plus browser UX audit | Verified |
+| REQ-024 | LLM-ready reviewer synthesis | Product UX; process-flow prepare-output stage | Should | System creates a reviewer brief and draft text from the validated decision packet, validates citations and prohibited language, and exposes a compact payload for future LLM-backed synthesis without requiring an API key. | Synthesis unit tests plus Streamlit/workbook checks | Verified |
 
 ## Traceability Notes
 
@@ -43,6 +45,8 @@ Status values:
 - LLM synthesis is not its own requirement until deterministic outputs are stable; it supports `REQ-004`, `REQ-011`, and `REQ-015`.
 - Upload mode is required for reviewer-driven testing, but it should not fork the business logic. Uploaded packages must stage into the same canonical case structure and call the same pipeline as sample cases.
 - Dashboard, process-flow, and workbook export requirements come directly from the exam prompt's product objective and the provided process-flow image.
+- Productized reviewer UX is required because the exam evaluates product judgment, not just backend correctness. The app should expose procurement decisions and evidence, not nonfunctional controls or internal implementation assertions.
+- LLM-ready synthesis supports the PNG's `Prepare outputs` stage. It is not allowed to change the deterministic packet, route, risk, budget, or missing-information decisions.
 
 ## Implementation Notes
 
@@ -52,3 +56,5 @@ Status values:
 - `REQ-018` is verified for multi-file uploads, zip uploads, optional support artifacts, and missing-file validation.
 - `REQ-019` through `REQ-021` are verified by Streamlit regression tests, upload edge-case tests, and workbook export tests.
 - `REQ-022` is verified by `tests/test_sample_upload_packets.py` and the generated files under `data/sample-upload-packets`.
+- `REQ-023` is verified by `tests/test_streamlit_app.py` and the productization QA note.
+- `REQ-024` is verified by `tests/test_synthesis.py`, `tests/test_streamlit_app.py`, and the workflow/synthesis QA note.

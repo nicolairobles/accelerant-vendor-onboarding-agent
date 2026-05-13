@@ -11,7 +11,7 @@ Covered areas:
 - Dashboard-first Streamlit homepage.
 - Sample case review workspace.
 - Uploaded package workspace.
-- Agent workflow panel.
+- Triage workflow panel.
 - XLSX triage workbook export.
 - Upload role matching, optional support-artifact handling, and edge-case guardrails.
 - Requirements, acceptance criteria, architecture, UX spec, roadmap, README, Kanban, and persistent planning notes.
@@ -19,7 +19,7 @@ Covered areas:
 ## Changes Verified
 
 - App home now opens on a vendor case queue instead of a single default case.
-- Case details retain the procurement review cockpit but add an agent workflow panel aligned to the source flow image.
+- Case details retain the procurement review cockpit but add a triage workflow panel aligned to the source flow image.
 - Export controls now include JSON, trace JSON, Markdown brief, and XLSX triage workbook.
 - Upload staging now applies stricter confidence thresholds for required artifacts.
 - Policy docs and arbitrary markdown are not accepted as security questionnaires.
@@ -49,7 +49,7 @@ Browser smoke:
 
 - Started Streamlit locally at `http://127.0.0.1:8501`.
 - Verified dashboard homepage renders `Vendor Case Queue` and `Queue Priorities`.
-- Verified review workspace renders TalentPulse AI with `Agent Workflow` and triage workbook export.
+- Verified review workspace renders TalentPulse AI with `Triage Workflow` and triage workbook export.
 - Verified upload workspace renders `New Vendor Package` and file uploader.
 - Refreshed README screenshots for dashboard, sample case workflow, and upload workspace.
 - Added generated sample upload packets and zips for valid low-risk, high-risk support-doc, prompt-injection, policy-doc decoy, mixed-vendor, and malformed quote scenarios.

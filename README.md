@@ -25,6 +25,8 @@ Current artifacts:
 - `ARCHITECTURE.md` - architecture note for the working prototype.
 - `PRODUCTIONIZATION.md` - productionization path, controls, evals, and deployment notes.
 - `docs/quality/dashboard-upload-guardrail-qa.md` - QA notes for the dashboard, process-flow, workbook, and upload guardrail pass.
+- `docs/quality/productization-ux-audit.md` - QA notes for the reviewer-facing UX cleanup.
+- `docs/quality/png-workflow-and-synthesis-assessment.md` - assessment of the provided process-flow PNG and the synthesis boundary.
 - `AGENTS.md` - repo-local AI coding guardrails.
 - `kanban.md` - Obsidian Kanban board for build work.
 - `task_plan.md`, `findings.md`, `progress.md` - persistent planning memory for longer AI-assisted sessions.
@@ -37,7 +39,7 @@ source .venv/bin/activate
 python -m pip install -r requirements.txt
 ```
 
-Python 3.11 is the intended runtime for deployment. The current prototype is deterministic and does not require an LLM API key.
+Python 3.11 is the intended runtime for deployment. The current prototype is deterministic and does not require an LLM API key. It includes an LLM-ready synthesis contract and deterministic reviewer brief fallback.
 
 ## Working Commands
 
@@ -95,13 +97,13 @@ The CLI writes:
 1. Open the deployed Streamlit app.
 2. Start on the dashboard case queue. Use it to compare case status, risk, spend, missing information, blockers, and next owner.
 3. Switch to `Review sample case` and open `case_003` for TalentPulse AI. This shows the hardest case: high risk, insufficient budget, legal/security/finance routing, missing vendor documents, evidence, drafts, and trace.
-4. Use the workflow panel and tabs to inspect how the packet is grounded:
-   - `Overview` for the procurement summary and next actions.
+4. Use the triage workflow panel and tabs to inspect how the packet is grounded:
+   - `Overview` for the procurement summary and required follow-up.
    - `Findings` for policy-specific blockers.
    - `Evidence` for source-linked extracted facts.
    - `Drafts` for human-reviewed vendor and internal follow-up text.
    - `Trace` for deterministic parser/tool/rule execution.
-5. Export JSON, trace, Markdown brief, or the XLSX triage workbook.
+5. Open `Export decision packet` to download JSON, trace, Markdown brief, or the XLSX triage workbook.
 6. Switch to `Upload package` to test a new vendor package. Upload either five files or one zip containing an intake workbook, quote CSV, contract PDF, security questionnaire, and vendor email. Optional support artifacts are mapped separately and reflected in the staged checklist.
 
 ## Screenshots
@@ -110,9 +112,9 @@ The CLI writes:
 
 ![Dashboard case queue](docs/assets/screenshots/dashboard-case-queue.png)
 
-### Sample Case Workflow
+### Productized Sample Case
 
-![Sample case workflow](docs/assets/screenshots/sample-case-workflow.png)
+![Productized sample case](docs/assets/screenshots/productized-sample-case.png)
 
 ### Upload Workspace
 
@@ -132,7 +134,9 @@ See `docs/quality/deployment-final-qa.md` for the full deployment QA notes.
 
 ## LLM Synthesis Stance
 
-The submitted prototype intentionally keeps policy decisions deterministic. LLM synthesis can be useful later for summaries, vendor follow-up drafts, and internal notes, but it should sit behind the existing structured decision packet, schema validation, evidence checks, and eval gate. The app should continue to run without `OPENAI_API_KEY`.
+The submitted prototype intentionally keeps policy decisions deterministic. It now includes packet-grounded reviewer synthesis for summaries, vendor follow-up drafts, and internal notes, but this synthesis is validated against the existing structured decision packet and does not require `OPENAI_API_KEY`.
+
+A live LLM provider can be added later behind `SynthesisBundle` and `build_llm_synthesis_payload()`. That provider should remain optional, use Streamlit secrets for credentials, and fail closed if schema, evidence, or prohibited-language validation fails.
 
 See `docs/research/llm-synthesis-assessment.md` for the recommended architecture and eval plan.
 

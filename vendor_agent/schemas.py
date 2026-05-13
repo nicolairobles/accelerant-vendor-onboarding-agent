@@ -173,6 +173,19 @@ class DraftMessage(BaseModel):
     requires_human_approval: bool = True
 
 
+class SynthesisBundle(BaseModel):
+    case_id: str
+    synthesis_mode: str
+    model_name: str
+    generated_at: Optional[str] = None
+    executive_summary: str
+    vendor_follow_up_draft: str
+    internal_note_draft: str
+    cited_evidence_ids: List[str] = Field(default_factory=list)
+    validation_status: str
+    validation_errors: List[str] = Field(default_factory=list)
+
+
 class ToolTraceEntry(BaseModel):
     tool_name: str
     status: str
@@ -193,5 +206,6 @@ class DecisionPacket(BaseModel):
     findings: List[PolicyFinding]
     approval_route: ApprovalRoute
     drafts: List[DraftMessage]
+    synthesis: Optional[SynthesisBundle] = None
     evidence: List[SourceEvidence]
     trace: List[ToolTraceEntry]

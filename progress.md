@@ -44,4 +44,16 @@
 - Added agent workflow panel and XLSX triage workbook export aligned to the provided process-flow PNG.
 - Updated requirements register, acceptance matrix, architecture, UX spec, implementation roadmap, README, and Kanban for `REQ-019` through `REQ-021`.
 - Added `scripts/build_sample_upload_packets.py`, generated sample upload packet folders/zips, and sample packet regression tests for `REQ-022`.
-- Clarified the dashboard metric from `Open Requests` to `Missing Items`, representing unresolved document or answer requests across the sample queue.
+- Clarified the dashboard metric from `Missing Items` to `Open Requests`, representing unresolved document or answer requests across the sample queue.
+- Started productization UX audit against the original exam prompt, all policy docs, and the provided process-flow PNG.
+- Identified primary UX defects: implementation-mode sidebar labels, nonfunctional review checkboxes, and overly prominent raw tool-call details in the main review path.
+- Removed implementation-mode sidebar copy from `app.py`.
+- Replaced nonfunctional case action checkboxes with reviewer-facing required follow-up rows.
+- Reworked the workflow panel into `Triage Workflow`, showing stage results by default and function calls behind disclosure.
+- Moved packet exports into an expander so exports are available without crowding the reviewer decision path.
+- Re-verified productized UX locally: compile passed, 28 pytest tests passed, eval passed 3/3, and browser smoke passed for dashboard, sample case review, upload landing, and mobile dashboard.
+- Updated requirements, acceptance matrix, architecture, UX spec, README, Kanban, and QA notes for the productized reviewer UX requirement.
+- Assessed the provided process-flow PNG and confirmed the current app covers all documented stages, with production workflow state still out of scope.
+- Added `SynthesisBundle`, `vendor_agent.synthesis`, `prepare_reviewer_synthesis` trace coverage, and a `Reviewer Brief` UI section.
+- Added synthesis output to Markdown/workbook exports and tests for evidence-cited synthesis, missing-information preservation, and compact future-LLM payload boundaries.
+- Re-verified after synthesis changes: compile passed, 30 pytest tests passed, eval passed 3/3, whitespace check passed, and browser smoke confirmed Reviewer Brief/Synthesis validation render without bringing back old sidebar clutter.

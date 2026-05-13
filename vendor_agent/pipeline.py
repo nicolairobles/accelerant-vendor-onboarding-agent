@@ -20,6 +20,7 @@ from .policies import (
     build_missing_information,
 )
 from .schemas import CaseFacts, DecisionPacket
+from .synthesis import build_synthesis_bundle
 from .tools import (
     calculate_total_contract_value,
     check_existing_vendor,
@@ -287,7 +288,7 @@ def run_case(case_dir: Path) -> DecisionPacket:
     status_reason = _status_reason(facts, missing, findings)
     summary = _summary(facts, status)
 
-    return DecisionPacket(
+    packet = DecisionPacket(
         case_id=case_id,
         status=status,
         status_reason=status_reason,
@@ -300,6 +301,21 @@ def run_case(case_dir: Path) -> DecisionPacket:
         evidence=evidence.items,
         trace=trace.entries,
     )
+    synthesis = trace.run(
+        "prepare_reviewer_synthesis",
+        ["REQ-004", "REQ-011", "REQ-024"],
+        {"case_id": case_id, "source": "validated_decision_packet"},
+        lambda: build_synthesis_bundle(packet),
+        output_summary=lambda result: {
+            "synthesis_mode": result.synthesis_mode,
+            "validation_status": result.validation_status,
+            "cited_evidence_ids": len(result.cited_evidence_ids),
+        },
+        evidence_id_extractor=lambda result: result.cited_evidence_ids,
+    )
+    packet.synthesis = synthesis
+    packet.trace = trace.entries
+    return packet
 
 
 def _value(values: Dict[str, object], key: str):

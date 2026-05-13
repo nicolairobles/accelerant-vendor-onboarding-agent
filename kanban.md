@@ -12,11 +12,9 @@ kanban-plugin: board
 - [ ] Add productionization note for Accelerant GPT / Agent Hub fit
 - [ ] Add optional OpenAI Agents SDK tracing spike
 - [ ] Add reviewer walkthrough script for Venkat/Jay panel
-- [ ] Add visual polish pass after core behavior works
 
 ## Ready
 
-- [ ] Add screenshots for README/submission package
 - [ ] Create private GitHub repo and push after user confirmation
 - [ ] Deploy private Streamlit app after GitHub repo exists
 - [ ] Run deployed smoke test
@@ -73,6 +71,9 @@ kanban-plugin: board
 - [x] Add XLSX triage workbook export
 - [x] Update requirements, acceptance matrix, architecture, UX spec, and README for dashboard/upload guardrail pass
 - [x] Add generated sample upload packets and zips for manual QA
+- [x] Productization UX audit and cleanup of noisy/nonfunctional review controls
+- [x] Add screenshots for README/submission package
+- [x] Assess process-flow PNG and add LLM-ready reviewer synthesis
 
 %% kanban:settings
 ```
