@@ -66,3 +66,4 @@
 - Added Streamlit secrets environment bridging so deployed root-level secrets can activate the optional OpenAI synthesis path without committing credentials.
 - Added a non-secret synthesis runtime signature to Streamlit sample-case caches so switching deployed secrets from deterministic to OpenAI forces fresh packets.
 - Re-verified action cockpit changes: compile passed, 32 pytest tests passed, eval passed 3/3, whitespace check passed, and local browser smoke confirmed OpenAI synthesis source, AI-assisted drafts, audit disclosure, and no secrets warning.
+- Pushed action cockpit and cache-key fixes to `main`; deployed Chrome smoke confirmed the action cockpit and live OpenAI synthesis source after Streamlit secrets were configured.

@@ -28,6 +28,8 @@ This pass covered the final submission path after GitHub push and Streamlit depl
 | Deployed upload zip path | Passed | Uploaded `/tmp/accelerant_case_002_upload.zip`; app produced Workspace Depot packet with low risk and missing setup docs. |
 | HTTP deployed smoke | Passed with session cookies | `curl -L -c cookiejar -b cookiejar` reached HTTP 200 and the Streamlit app shell. |
 | README screenshots | Passed | Automated local Playwright screenshots saved under `docs/assets/screenshots/`. |
+| Action cockpit deployed smoke | Passed | Chrome verified `Action Cockpit`, `Required Vendor Follow-up`, `Internal Review Route`, `AI-Assisted Drafts`, and collapsed `Audit details`. |
+| OpenAI synthesis deployed smoke | Passed | Chrome verified `Synthesis source: gpt-4o-mini-2024-07-18` and `Draft source: gpt-4o-mini-2024-07-18` after Streamlit secrets were configured. |
 
 ## Issues Found
 
@@ -44,7 +46,7 @@ This pass covered the final submission path after GitHub push and Streamlit depl
 
 - Before sending the final submission, confirm the intended reviewer access model: public Streamlit link, Streamlit invite, or private access through a known account.
 - Upload mode supports the exercise package shape. Production would need broader document classification, extraction fallback, and reviewer correction workflows.
-- The app is intentionally deterministic. LLM synthesis is documented as an optional enhancement but not enabled in the submitted build.
+- Policy decisions remain deterministic. OpenAI synthesis is enabled only for reviewer brief and editable draft text, with deterministic fallback if validation fails.
 
 ## Final Assessment
 
