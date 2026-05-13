@@ -99,18 +99,24 @@ Source: [W3C WAI accessibility principles](https://www.w3.org/WAI/fundamentals/a
 
 ```text
 Sidebar
-  Case selector
-  Run triage button
+  Workspace selector
+    Dashboard
+    Review sample case
+    Upload package
+  Case selector or uploader by workspace
   Deterministic/LLM mode indicator
   Human approval notice
   Export buttons after run
 
 Main
   Header: Vendor Onboarding Triage
+  Dashboard: vendor case queue
+  Detail: status banner
   Status banner
   Key metrics row
   Next actions panel
   Approval route panel
+  Agent workflow progress
   Tabs
     Overview
     Findings
@@ -124,14 +130,16 @@ Main
 ```text
 +---------------------------------------------------------------+
 | Vendor Onboarding Triage                                      |
-| Turns a vendor packet into an evidence-backed decision packet. |
+| Procurement case queue and evidence-backed review packets.     |
 +----------------------+----------------------------------------+
-| Sidebar              | BLOCKED - Missing required information |
-|                      | Northstar Analytics needs Security,    |
-| Case                 | Legal, Finance, Procurement review.    |
-| [case_001 v]         +----------------------------------------+
-|                      | Vendor      ACV       TCV       Risk   |
-| [Run triage]         | Northstar   $85k      $170k     High   |
+| Sidebar              | Vendor Case Queue                      |
+| Workspace            | Cases  Blocked  High Risk  Open Reqs   |
+| [Dashboard v]        | 3      3        2          10          |
+|                      +----------------------------------------+
+|                      | Case     Vendor       Status  Next     |
+|                      | 001      Northstar    Blocked Legal    |
+|                      | 002      Workspace    Blocked Proc     |
+|                      | 003      TalentPulse  Blocked Finance  |
 |                      +----------------------------------------+
 | Mode                 | Next Actions                           |
 | deterministic + LLM  | 1. Request SOC 2 Type II               |
@@ -169,6 +177,36 @@ Components:
 Product rule:
 
 - The Overview tab must not contain raw file text or long policy excerpts.
+
+## Dashboard
+
+Purpose: answer "what needs attention first?"
+
+Components:
+
+- Case queue with status, risk, ACV, TCV, budget status, missing-info count, blocker count, and next owner.
+- Queue metrics for total cases, blocked cases, high-risk cases, and open information requests.
+- Priority list that turns the first missing item or blocker into the next procurement action.
+
+Product rule:
+
+- The app should not land on a single default case. A single case can be the default only after the reviewer chooses the review workspace.
+
+## Agent Workflow Panel
+
+Purpose: make the provided process-flow image visible in the running product.
+
+Stages:
+
+- Parse and extract inputs.
+- Validate package.
+- Normalize case facts.
+- Run deterministic helper tools.
+- Determine approvals and risk tier.
+- Prepare outputs.
+- Human approval gate.
+
+The panel should show stage status and tool names without requiring the reviewer to inspect raw trace JSON.
 
 ## Findings Tab
 
@@ -254,6 +292,20 @@ Show:
 - Schema validation status.
 
 This tab proves the architecture without overwhelming the primary user.
+
+## Triage Workbook Export
+
+Purpose: create the artifact a procurement owner can hand to Finance, Legal, Security, or a business owner.
+
+Workbook sheets:
+
+- Summary.
+- Missing Info.
+- Findings.
+- Approval Route.
+- Trace.
+
+The workbook is a human-routing artifact, not a system-of-record writeback.
 
 ## Case-Specific UX Targets
 
@@ -400,4 +452,3 @@ Production metrics:
 - False-ready blocker count.
 - Draft follow-up usage rate.
 - Time from intake to first complete packet.
-

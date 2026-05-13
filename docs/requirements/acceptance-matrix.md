@@ -13,7 +13,7 @@ This matrix defines how we know each requirement is actually satisfied.
 | REQ-007 | Missing info eval | `evals/seed-cases.json` | Missing vendor/internal info matches expected baseline per case. | Verified |
 | REQ-008 | Approval route eval | `python3 -m vendor_agent.cli eval` | Approval route matches expected reviewers and never grants final approval. | Verified |
 | REQ-009 | Trace validation | `outputs/case_*.trace.json` | Trace includes tool names, inputs, outputs, timing, and status. | Verified |
-| REQ-010 | UI smoke test | `streamlit run app.py` and deployed Streamlit app | Reviewer can run all three cases and inspect Overview, Findings, Evidence, Drafts, Trace. | Verified |
+| REQ-010 | UI smoke test | `streamlit run app.py` and deployed Streamlit app | Reviewer starts at a case queue, can open all three cases, and can inspect Overview, Findings, Evidence, Drafts, Workflow, and Trace. | Verified |
 | REQ-011 | Draft quality review | Decision packets and UI Drafts tab | Drafts are actionable, labeled drafts, and avoid approval/commitment language. | Verified |
 | REQ-012 | Eval harness | `python3 -m vendor_agent.cli eval` | All seeded cases pass; failures show actionable diff. | Verified |
 | REQ-013 | Fresh-clone smoke test | README commands | Setup and CLI commands work from a clean environment. | Verified locally |
@@ -21,7 +21,11 @@ This matrix defines how we know each requirement is actually satisfied.
 | REQ-015 | Document review | `ARCHITECTURE.md`, `PRODUCTIONIZATION.md`, README | Docs explain architecture, product judgment, evals, guardrails, and production path. | Implemented |
 | REQ-016 | Confidentiality review | `.gitignore`, `.env.example`, git status | No secrets; repo stays private; package handling is explicit. | Verified locally |
 | REQ-017 | Guardrail files review | `AGENTS.md`, `.github/`, `docs/requirements/` | AI/build guardrails exist and are referenced by future work. | Verified |
-| REQ-018 | Upload package tests | `tests/test_upload_mode.py`, Streamlit smoke test | Multiple files and zip upload stage to canonical case format; missing required files are reported before triage. | Verified |
+| REQ-018 | Upload package tests | `tests/test_upload_mode.py`, Streamlit smoke test | Multiple files and zip upload stage to canonical case format; missing required files are reported before triage; optional support docs are mapped. | Verified |
+| REQ-019 | Dashboard regression test | `tests/test_streamlit_app.py` | App home renders a pending case queue with status, risk, spend, missing-info, blocker, and next-owner fields. | Verified |
+| REQ-020 | Upload guardrail regression tests | `tests/test_upload_mode.py` | Policy docs are not misclassified as questionnaires; corrupt quote CSV is rejected; mixed-vendor zip is blocked; prompt injection does not bypass human gate; optional artifacts resolve matching checklist items. | Verified |
+| REQ-021 | Workflow/workbook export tests | `tests/test_streamlit_app.py` | Case view includes agent workflow progress and workbook export contains Summary, Missing Info, Findings, Approval Route, and Trace sheets. | Verified |
+| REQ-022 | Sample upload packet tests | `tests/test_sample_upload_packets.py`, `data/sample-upload-packets/README.md` | Valid sample packets run as expected; invalid/guardrail sample packets are blocked or remain human-gated; zips are available for manual app testing. | Verified |
 
 ## Verification Tiers
 

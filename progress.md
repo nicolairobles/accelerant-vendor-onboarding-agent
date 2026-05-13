@@ -38,3 +38,10 @@
 - Re-verified with `python3 -m vendor_agent.cli eval`: `3/3 passed`.
 - Browser-tested sample mode, multi-file upload, zip upload, missing-file validation, and mobile upload visibility.
 - Added `docs/quality/upload-mode-final-qa.md`.
+- Added dashboard-first Streamlit home view with pending case queue, queue metrics, priority actions, and separate sample-case review workspace.
+- Hardened upload staging with stricter role confidence thresholds, file count/size limits, mixed-vendor zip blocking, optional support-artifact mapping, and checklist updates for uploaded support docs.
+- Added regression coverage for policy documents not being misclassified, corrupt quote rejection, mixed-vendor zip blocking, prompt-injection vendor email containment, optional support artifact handling, dashboard rendering, workflow panel, and XLSX workbook export.
+- Added agent workflow panel and XLSX triage workbook export aligned to the provided process-flow PNG.
+- Updated requirements register, acceptance matrix, architecture, UX spec, implementation roadmap, README, and Kanban for `REQ-019` through `REQ-021`.
+- Added `scripts/build_sample_upload_packets.py`, generated sample upload packet folders/zips, and sample packet regression tests for `REQ-022`.
+- Clarified the dashboard metric from `Open Requests` to `Missing Items`, representing unresolved document or answer requests across the sample queue.

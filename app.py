@@ -2,10 +2,12 @@ import json
 import html
 import shutil
 import tempfile
+from io import BytesIO
 from pathlib import Path
 
 import pandas as pd
 import streamlit as st
+from openpyxl import Workbook
 
 from vendor_agent.pipeline import run_case
 from vendor_agent.uploads import UploadedArtifact, missing_role_labels, stage_uploaded_case
@@ -14,6 +16,11 @@ from vendor_agent.uploads import UploadedArtifact, missing_role_labels, stage_up
 PACKAGE_ROOT = Path("data/source-package/Candidate_package")
 CASES_ROOT = Path("data/source-package/Candidate_package/cases")
 CASE_OPTIONS = ["case_001", "case_002", "case_003"]
+CASE_DISPLAY_NAMES = {
+    "case_001": "case_001 - Northstar Analytics",
+    "case_002": "case_002 - Workspace Depot",
+    "case_003": "case_003 - TalentPulse AI",
+}
 
 
 st.set_page_config(
@@ -25,57 +32,120 @@ st.set_page_config(
 
 def main() -> None:
     st.title("Vendor Onboarding Triage")
-    st.caption("Evidence-backed procurement review packet")
+    st.caption("Procurement case queue and evidence-backed review packets")
 
     with st.sidebar:
-        input_mode = st.radio("Input mode", ["Sample case", "Upload package"])
-        selected_case = None
-        uploaded_files = []
-        if input_mode == "Sample case":
-            selected_case = st.selectbox("Case", CASE_OPTIONS, index=2)
-            run_clicked = st.button("Run triage", type="primary", use_container_width=True)
-        else:
-            uploaded_files = st.file_uploader(
-                "Vendor package files",
-                type=["xlsx", "csv", "pdf", "md", "txt", "zip"],
-                accept_multiple_files=True,
-                help=(
-                    "Upload intake workbook, quote CSV, contract PDF, security "
-                    "questionnaire, and vendor email. A zip containing those files is also supported."
-                ),
-            )
-            st.caption("Required: intake workbook, quote CSV, contract PDF, security questionnaire, vendor email.")
-            st.caption("Uploaded files are staged in temporary storage for this session only.")
-            run_clicked = st.button("Run uploaded package", type="primary", use_container_width=True)
+        workspace = st.radio(
+            "Workspace",
+            ["Dashboard", "Review sample case", "Upload package"],
+        )
         st.divider()
         st.caption("Mode")
         st.write("Deterministic policy workflow")
         st.caption("Human gate")
         st.write("No approvals, sends, spend commitments, or legal acceptance.")
 
-    if input_mode == "Sample case":
-        _run_sample_case(selected_case, run_clicked)
+    if workspace == "Dashboard":
+        st.session_state["input_mode"] = "Dashboard"
+        render_dashboard()
+    elif workspace == "Review sample case":
+        selected_label = st.sidebar.selectbox(
+            "Case",
+            [CASE_DISPLAY_NAMES[case_id] for case_id in CASE_OPTIONS],
+            index=2,
+        )
+        selected_case = selected_label.split(" - ", 1)[0]
+        refresh_clicked = st.sidebar.button("Refresh triage", type="primary", use_container_width=True)
+        _run_sample_case(selected_case, refresh_clicked)
+        packet = st.session_state.get("packet")
+        if packet and st.session_state.get("input_mode") == workspace:
+            render_packet(packet)
     else:
+        uploaded_files = st.sidebar.file_uploader(
+            "Vendor package files",
+            type=["xlsx", "csv", "pdf", "md", "txt", "zip"],
+            accept_multiple_files=True,
+            help=(
+                "Upload intake workbook, quote CSV, contract PDF, security "
+                "questionnaire, vendor email, and optional support artifacts."
+            ),
+        )
+        st.sidebar.caption("Required: intake workbook, quote CSV, contract PDF, security questionnaire, vendor email.")
+        st.sidebar.caption("Optional: DPA, SOC 2, subprocessors, tax form, vendor setup form, AI opt-out confirmation.")
+        run_clicked = st.sidebar.button("Run uploaded package", type="primary", use_container_width=True)
         _run_uploaded_case(uploaded_files, run_clicked)
-
-    packet = st.session_state.get("packet")
-    if packet and st.session_state.get("input_mode") == input_mode:
-        render_packet(packet)
-        if input_mode == "Upload package":
+        packet = st.session_state.get("packet")
+        if packet and st.session_state.get("input_mode") == workspace:
+            render_packet(packet)
             render_upload_details(st.session_state.get("uploaded_case"))
-    elif input_mode == "Upload package":
-        render_upload_feedback()
-        st.info("Upload a vendor package and run triage to produce a decision packet.")
+        else:
+            render_upload_feedback()
+            render_upload_landing()
+
+
+@st.cache_data(show_spinner=False)
+def _run_sample_case_cached(case_id: str):
+    return run_case(CASES_ROOT / case_id)
+
+
+@st.cache_data(show_spinner=False)
+def _sample_packets():
+    return {case_id: run_case(CASES_ROOT / case_id) for case_id in CASE_OPTIONS}
+
+
+def render_dashboard() -> None:
+    packets = _sample_packets()
+    rows = [_case_queue_row(case_id, packet) for case_id, packet in packets.items()]
+    blocked_count = len([packet for packet in packets.values() if packet.status == "blocked"])
+    high_risk_count = len([packet for packet in packets.values() if packet.facts.risk.tier == "high"])
+    missing_count = sum(len(packet.missing_information) for packet in packets.values())
+
+    st.subheader("Vendor Case Queue")
+    metric_cols = st.columns(4)
+    metric_cols[0].metric("Cases", len(packets))
+    metric_cols[1].metric("Blocked", blocked_count)
+    metric_cols[2].metric("High Risk", high_risk_count)
+    metric_cols[3].metric("Missing Items", missing_count)
+    st.caption(
+        "Missing Items is the total count of unresolved document or answer requests across the sample case queue."
+    )
+
+    st.dataframe(
+        pd.DataFrame(rows),
+        use_container_width=True,
+        hide_index=True,
+        column_config={
+            "ACV": st.column_config.NumberColumn("ACV", format="$%d"),
+            "TCV": st.column_config.NumberColumn("TCV", format="$%d"),
+            "Missing": st.column_config.NumberColumn("Missing", format="%d"),
+            "Blockers": st.column_config.NumberColumn("Blockers", format="%d"),
+        },
+    )
+
+    st.subheader("Queue Priorities")
+    for packet in sorted(
+        packets.values(),
+        key=lambda item: (
+            item.status != "blocked",
+            item.facts.risk.tier != "high",
+            -len(item.missing_information),
+        ),
+    ):
+        top_action = _next_actions(packet)[0] if _next_actions(packet) else "Ready for routine routing"
+        st.write(
+            "**%s**: %s. Next: %s."
+            % (packet.facts.vendor_name, _status_label(packet), top_action)
+        )
 
 
 def _run_sample_case(selected_case: str, run_clicked: bool) -> None:
     context_key = "sample:%s" % selected_case
     if run_clicked or st.session_state.get("packet_context") != context_key:
         with st.status("Running triage", expanded=False) as status:
-            packet = run_case(CASES_ROOT / selected_case)
+            packet = _run_sample_case_cached(selected_case)
             st.session_state["packet"] = packet
             st.session_state["packet_context"] = context_key
-            st.session_state["input_mode"] = "Sample case"
+            st.session_state["input_mode"] = "Review sample case"
             st.session_state["uploaded_case"] = None
             st.session_state["upload_feedback"] = None
             status.update(label="Triage complete", state="complete")
@@ -114,14 +184,20 @@ def _run_uploaded_case(uploaded_files, run_clicked: bool) -> None:
             st.session_state["uploaded_case"] = uploaded_case
             st.session_state["packet_context"] = "upload:incomplete"
             st.session_state["input_mode"] = "Upload package"
+            errors = list(uploaded_case.blocking_errors)
+            if uploaded_case.missing_roles:
+                errors.append(
+                    "Missing required files: %s."
+                    % ", ".join(missing_role_labels(uploaded_case.missing_roles))
+                )
             st.session_state["upload_feedback"] = {
-                "error": "Missing required files: %s."
-                % ", ".join(missing_role_labels(uploaded_case.missing_roles)),
+                "error": " ".join(errors) or "Upload package is not complete enough for triage.",
                 "warnings": (
                     ["Unmatched files: %s." % ", ".join(uploaded_case.unmatched_files)]
                     if uploaded_case.unmatched_files
                     else []
-                ),
+                )
+                + uploaded_case.warnings,
             }
             status.update(label="Upload package incomplete", state="error")
             return
@@ -168,6 +244,8 @@ def render_packet(packet) -> None:
         for index, reviewer in enumerate(packet.approval_route.required_reviewers, start=1):
             st.write("%s. %s" % (index, reviewer))
 
+    render_workflow_progress(packet)
+
     st.download_button(
         "Download JSON packet",
         data=json.dumps(packet.model_dump(mode="json"), indent=2, sort_keys=True),
@@ -186,6 +264,12 @@ def render_packet(packet) -> None:
         file_name="%s_brief.md" % packet.case_id,
         mime="text/markdown",
     )
+    st.download_button(
+        "Download triage workbook",
+        data=_triage_workbook_bytes(packet),
+        file_name="%s_triage_workbook.xlsx" % packet.case_id,
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    )
 
     overview_tab, findings_tab, evidence_tab, drafts_tab, trace_tab = st.tabs(
         ["Overview", "Findings", "Evidence", "Drafts", "Trace"]
@@ -202,6 +286,63 @@ def render_packet(packet) -> None:
         render_trace(packet)
 
 
+def render_workflow_progress(packet) -> None:
+    trace_tools = {entry.tool_name for entry in packet.trace}
+    rows = [
+        _workflow_row(
+            "Parse and extract inputs",
+            [
+                "parse_intake_workbook",
+                "parse_vendor_email",
+                "parse_quote_csv",
+                "parse_security_questionnaire",
+                "parse_contract_pdf",
+            ],
+            trace_tools,
+            "Required source files parsed into evidence-backed facts.",
+        ),
+        _workflow_row(
+            "Validate package",
+            ["parse_case_inventory", "detect_missing_information"],
+            trace_tools,
+            _package_validation_note(packet),
+        ),
+        _workflow_row(
+            "Normalize case facts",
+            ["classify_data_sensitivity"],
+            trace_tools,
+            "%s, %s ACV, %s risk."
+            % (packet.facts.vendor_name, _money(packet.facts.annual_contract_value), packet.facts.risk.tier),
+        ),
+        _workflow_row(
+            "Run deterministic helper tools",
+            ["lookup_budget", "check_existing_vendor", "calculate_total_contract_value"],
+            trace_tools,
+            "Budget, duplicate vendor, and total contract value checks completed.",
+        ),
+        _workflow_row(
+            "Determine approvals and risk tier",
+            ["run_policy_checks", "determine_required_approvals"],
+            trace_tools,
+            "%s reviewer route." % len(packet.approval_route.required_reviewers),
+        ),
+        _workflow_row(
+            "Prepare outputs",
+            ["draft_human_review_messages"],
+            trace_tools,
+            "Decision packet, drafts, trace, brief, and workbook exports are available.",
+        ),
+        {
+            "Stage": "Human approval gate",
+            "Status": "Required",
+            "Tool calls": "human_review",
+            "Outcome": "Procurement owner reviews, edits, approves, or rejects.",
+        },
+    ]
+    st.subheader("Agent Workflow")
+    st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
+
+
 def render_upload_details(uploaded_case) -> None:
     if not uploaded_case:
         return
@@ -216,6 +357,17 @@ def render_upload_details(uploaded_case) -> None:
                 for match in uploaded_case.role_matches
             ]
             st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
+        if uploaded_case.optional_matches:
+            st.caption("Support artifacts")
+            support_rows = [
+                {
+                    "Artifact": _artifact_label(match.role),
+                    "Uploaded file": match.uploaded_name,
+                    "Staged file": match.staged_name,
+                }
+                for match in uploaded_case.optional_matches
+            ]
+            st.dataframe(pd.DataFrame(support_rows), use_container_width=True, hide_index=True)
         if uploaded_case.warnings:
             for warning in uploaded_case.warnings:
                 st.warning(warning)
@@ -230,6 +382,22 @@ def render_upload_feedback() -> None:
     st.error(feedback["error"])
     for warning in feedback.get("warnings", []):
         st.warning(warning)
+
+
+def render_upload_landing() -> None:
+    st.subheader("New Vendor Package")
+    st.info("Upload a vendor package and run triage to produce a decision packet.")
+    expected = pd.DataFrame(
+        [
+            {"Role": "Intake", "Required": True, "Accepted": ".xlsx"},
+            {"Role": "Quote or order form", "Required": True, "Accepted": ".csv"},
+            {"Role": "Contract excerpt", "Required": True, "Accepted": ".pdf"},
+            {"Role": "Security questionnaire", "Required": True, "Accepted": ".md"},
+            {"Role": "Vendor email", "Required": True, "Accepted": ".txt"},
+            {"Role": "Support artifacts", "Required": False, "Accepted": ".pdf, .md, .txt"},
+        ]
+    )
+    st.dataframe(expected, use_container_width=True, hide_index=True)
 
 
 def render_overview(packet) -> None:
@@ -276,12 +444,24 @@ def render_findings(packet) -> None:
         }
         for finding in packet.findings
     ]
-    st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
+    findings_df = pd.DataFrame(rows)
+    blocker_rows = findings_df[findings_df["Severity"] == "blocker"] if not findings_df.empty else findings_df
+    if not blocker_rows.empty:
+        st.subheader("Blocking Issues")
+        st.dataframe(
+            blocker_rows[["Function", "Trigger", "Owner", "Recommended action", "Evidence"]],
+            use_container_width=True,
+            hide_index=True,
+        )
 
-    for function in sorted({finding.function for finding in packet.findings}):
-        with st.expander(function):
+    st.subheader("All Findings")
+    st.dataframe(findings_df, use_container_width=True, hide_index=True)
+
+    with st.expander("Detailed policy rationale"):
+        for function in sorted({finding.function for finding in packet.findings}):
+            st.markdown("**%s**" % function)
             for finding in [item for item in packet.findings if item.function == function]:
-                st.markdown("**%s**" % finding.trigger)
+                st.markdown("- **%s**" % finding.trigger)
                 st.write(finding.why_it_matters)
                 st.caption("Owner: %s | Severity: %s" % (finding.required_owner, finding.severity))
                 st.caption("Policy: %s" % "; ".join(finding.policy_refs))
@@ -339,6 +519,139 @@ def render_trace(packet) -> None:
 
     with st.expander("Raw trace JSON"):
         st.json([entry.model_dump(mode="json") for entry in packet.trace])
+
+
+def _case_queue_row(case_id: str, packet) -> dict:
+    blockers = len([finding for finding in packet.findings if finding.severity == "blocker"])
+    return {
+        "Case": case_id,
+        "Vendor": packet.facts.vendor_name,
+        "Status": _status_label(packet),
+        "Risk": packet.facts.risk.tier.title(),
+        "ACV": packet.facts.annual_contract_value,
+        "TCV": packet.facts.total_contract_value.total_contract_value,
+        "Budget": packet.facts.budget.status.title(),
+        "Missing": len(packet.missing_information),
+        "Blockers": blockers,
+        "Next owner": _next_owner(packet),
+    }
+
+
+def _next_owner(packet) -> str:
+    if packet.missing_information:
+        return packet.missing_information[0].owner
+    if packet.approval_route.required_reviewers:
+        return packet.approval_route.required_reviewers[-1]
+    return "Procurement owner"
+
+
+def _workflow_row(stage: str, tools: list, trace_tools: set, outcome: str) -> dict:
+    completed = [tool for tool in tools if tool in trace_tools]
+    status = "Complete" if len(completed) == len(tools) else "Pending"
+    return {
+        "Stage": stage,
+        "Status": status,
+        "Tool calls": ", ".join(tools),
+        "Outcome": outcome,
+    }
+
+
+def _package_validation_note(packet) -> str:
+    if packet.missing_information:
+        return "%s open request(s); not complete enough for approval readiness." % len(packet.missing_information)
+    return "Complete enough for triage."
+
+
+def _artifact_label(key: str) -> str:
+    labels = {
+        "soc2_type2": "SOC 2 Type II",
+        "data_processing_agreement": "Data Processing Agreement",
+        "subprocessor_list": "Subprocessor list",
+        "tax_form": "Tax form",
+        "vendor_setup_form": "Vendor setup form",
+        "ai_training_opt_out": "AI training opt-out",
+        "incident_response_summary": "Incident response summary",
+        "statement_of_work": "Statement of work",
+    }
+    return labels.get(key, key.replace("_", " ").title())
+
+
+def _triage_workbook_bytes(packet) -> bytes:
+    wb = Workbook()
+    summary = wb.active
+    summary.title = "Summary"
+    _append_rows(
+        summary,
+        [
+            ("Case ID", packet.case_id),
+            ("Vendor", packet.facts.vendor_name),
+            ("Status", packet.status),
+            ("Status reason", packet.status_reason),
+            ("Risk", packet.facts.risk.tier),
+            ("ACV", packet.facts.annual_contract_value),
+            ("TCV", packet.facts.total_contract_value.total_contract_value),
+            ("Budget", packet.facts.budget.status),
+            ("Summary", packet.summary),
+        ],
+    )
+
+    missing = wb.create_sheet("Missing Info")
+    missing.append(["Item", "Owner", "Why needed", "Evidence IDs"])
+    for item in packet.missing_information:
+        missing.append([item.item, item.owner, item.why_needed, ", ".join(item.evidence_ids)])
+
+    findings = wb.create_sheet("Findings")
+    findings.append(["ID", "Function", "Severity", "Trigger", "Owner", "Action", "Evidence IDs", "Policy refs"])
+    for finding in packet.findings:
+        findings.append(
+            [
+                finding.id,
+                finding.function,
+                finding.severity,
+                finding.trigger,
+                finding.required_owner,
+                finding.recommended_action,
+                ", ".join(finding.evidence_ids),
+                "; ".join(finding.policy_refs),
+            ]
+        )
+
+    route = wb.create_sheet("Approval Route")
+    route.append(["Order", "Reviewer"])
+    for index, reviewer in enumerate(packet.approval_route.required_reviewers, start=1):
+        route.append([index, reviewer])
+    route.append([])
+    route.append(["Prohibited action"])
+    for action in packet.approval_route.prohibited_actions:
+        route.append([action])
+
+    trace = wb.create_sheet("Trace")
+    trace.append(["Step", "Tool", "Status", "Duration ms", "Requirements", "Evidence IDs"])
+    for index, entry in enumerate(packet.trace, start=1):
+        trace.append(
+            [
+                index,
+                entry.tool_name,
+                entry.status,
+                entry.duration_ms,
+                ", ".join(entry.requirement_ids),
+                ", ".join(entry.evidence_ids),
+            ]
+        )
+
+    for ws in wb.worksheets:
+        for column_cells in ws.columns:
+            width = min(max(len(str(cell.value or "")) for cell in column_cells) + 2, 60)
+            ws.column_dimensions[column_cells[0].column_letter].width = width
+
+    buffer = BytesIO()
+    wb.save(buffer)
+    return buffer.getvalue()
+
+
+def _append_rows(sheet, rows) -> None:
+    for label, value in rows:
+        sheet.append([label, value])
 
 
 def _status_label(packet) -> str:

@@ -21,8 +21,10 @@ Current artifacts:
 - `docs/requirements/requirements-control-plane.md` - requirements tracking and AI-assisted build guardrail strategy.
 - `docs/requirements/requirements-register.md` - source of truth for product/exam requirements.
 - `docs/requirements/acceptance-matrix.md` - verification matrix for each requirement.
+- `data/sample-upload-packets/` - realistic upload packet folders and zips for manual QA.
 - `ARCHITECTURE.md` - architecture note for the working prototype.
 - `PRODUCTIONIZATION.md` - productionization path, controls, evals, and deployment notes.
+- `docs/quality/dashboard-upload-guardrail-qa.md` - QA notes for the dashboard, process-flow, workbook, and upload guardrail pass.
 - `AGENTS.md` - repo-local AI coding guardrails.
 - `kanban.md` - Obsidian Kanban board for build work.
 - `task_plan.md`, `findings.md`, `progress.md` - persistent planning memory for longer AI-assisted sessions.
@@ -51,7 +53,7 @@ python3 -m pytest -q
 streamlit run app.py
 ```
 
-The deterministic pipeline is implemented for all three cases. The Streamlit app defaults to the highest-friction case so reviewers can immediately inspect the full blocker, evidence, routing, draft, and trace experience.
+The deterministic pipeline is implemented for all three cases. The Streamlit app opens on a procurement case queue, then lets reviewers drill into sample cases or upload a new package.
 
 The Streamlit app also supports an uploaded single-vendor package. Upload either the five required files or a zip containing them:
 
@@ -61,7 +63,24 @@ The Streamlit app also supports an uploaded single-vendor package. Upload either
 - security questionnaire (`.md`)
 - vendor email (`.txt`)
 
-Uploaded files are staged temporarily and run through the same deterministic pipeline as the sample cases.
+Uploaded files are staged temporarily and run through the same deterministic pipeline as the sample cases. Upload mode also recognizes optional support artifacts such as DPA, SOC 2, subprocessor list, tax form, vendor setup form, and AI training opt-out confirmation. Ambiguous or mixed-vendor packages are blocked before triage.
+
+## Sample Upload Packets
+
+Use the zips under `data/sample-upload-packets/zips/` to test upload mode:
+
+- `valid_low_risk_ops_complete.zip`
+- `high_risk_ai_with_support_artifacts.zip`
+- `guardrail_prompt_injection_email.zip`
+- `guardrail_policy_doc_decoy_incomplete.zip`
+- `invalid_mixed_vendor_case_prefixes.zip`
+- `invalid_bad_quote_schema.zip`
+
+Regenerate them with:
+
+```bash
+python3 scripts/build_sample_upload_packets.py
+```
 
 GitHub Actions is configured to run compile checks, unit tests, and deterministic evals on Python 3.11 after the repo is pushed.
 
@@ -74,33 +93,30 @@ The CLI writes:
 ## Reviewer Walkthrough
 
 1. Open the deployed Streamlit app.
-2. Review the default `case_003` packet for TalentPulse AI. This shows the hardest case: high risk, insufficient budget, legal/security/finance routing, missing vendor documents, evidence, drafts, and trace.
-3. Use the tabs to inspect how the packet is grounded:
+2. Start on the dashboard case queue. Use it to compare case status, risk, spend, missing information, blockers, and next owner.
+3. Switch to `Review sample case` and open `case_003` for TalentPulse AI. This shows the hardest case: high risk, insufficient budget, legal/security/finance routing, missing vendor documents, evidence, drafts, and trace.
+4. Use the workflow panel and tabs to inspect how the packet is grounded:
    - `Overview` for the procurement summary and next actions.
    - `Findings` for policy-specific blockers.
    - `Evidence` for source-linked extracted facts.
    - `Drafts` for human-reviewed vendor and internal follow-up text.
    - `Trace` for deterministic parser/tool/rule execution.
-4. Use the sidebar to switch between sample cases and run triage again.
-5. Switch to `Upload package` to test a new vendor package. Upload either five files or one zip containing an intake workbook, quote CSV, contract PDF, security questionnaire, and vendor email. The uploaded files are staged temporarily and evaluated by the same deterministic pipeline.
+5. Export JSON, trace, Markdown brief, or the XLSX triage workbook.
+6. Switch to `Upload package` to test a new vendor package. Upload either five files or one zip containing an intake workbook, quote CSV, contract PDF, security questionnaire, and vendor email. Optional support artifacts are mapped separately and reflected in the staged checklist.
 
 ## Screenshots
 
-### Default Case Overview
+### Dashboard Case Queue
 
-![Sample case overview](docs/assets/screenshots/sample-case-overview.png)
+![Dashboard case queue](docs/assets/screenshots/dashboard-case-queue.png)
 
-### Evidence Review
+### Sample Case Workflow
 
-![Evidence tab](docs/assets/screenshots/sample-case-evidence.png)
+![Sample case workflow](docs/assets/screenshots/sample-case-workflow.png)
 
-### Upload Mode
+### Upload Workspace
 
-![Upload mode](docs/assets/screenshots/upload-mode-empty.png)
-
-### Uploaded Zip Result
-
-![Uploaded zip result](docs/assets/screenshots/upload-zip-result.png)
+![Upload workspace](docs/assets/screenshots/upload-workspace.png)
 
 ## Deployment QA
 

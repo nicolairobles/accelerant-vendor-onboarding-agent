@@ -51,7 +51,7 @@ def build_missing_information(facts: CaseFacts) -> List[MissingInfoItem]:
             "The vendor processes personal, customer, employee, or confidential data and needs data protection terms.",
         )
 
-    if ai_data_use_needs_confirmation:
+    if ai_data_use_needs_confirmation and not _doc_provided(facts, "ai_training_opt_out"):
         item = checklist.get("ai_training_opt_out")
         evidence_ids = [item.evidence_id] if item else _ai_evidence_ids(facts)
         label = (
@@ -92,7 +92,11 @@ def build_missing_information(facts: CaseFacts) -> List[MissingInfoItem]:
             )
         )
 
-    if facts.risk.tier == "high" and not facts.security.incident_response:
+    if (
+        facts.risk.tier == "high"
+        and not facts.security.incident_response
+        and not _doc_provided(facts, "incident_response_summary")
+    ):
         missing.append(
             MissingInfoItem(
                 item="Incident response and breach notification summary",
@@ -250,7 +254,11 @@ def build_findings(facts: CaseFacts) -> List[PolicyFinding]:
             ["Security Review Policy: When Security review is required", "Vendor Risk Policy: Risk tiering"],
         )
 
-    if facts.risk.tier in {"medium", "high"} and not facts.security.soc2_type2_provided:
+    if (
+        facts.risk.tier in {"medium", "high"}
+        and not facts.security.soc2_type2_provided
+        and not _doc_provided(facts, "soc2_type2")
+    ):
         add(
             "Security",
             "blocker",
@@ -262,7 +270,7 @@ def build_findings(facts: CaseFacts) -> List[PolicyFinding]:
             ["Security Review Policy: Required security materials"],
         )
 
-    if _has_ai_data_use_concern(facts):
+    if _has_ai_data_use_concern(facts) and not _doc_provided(facts, "ai_training_opt_out"):
         add(
             "Security",
             "blocker",

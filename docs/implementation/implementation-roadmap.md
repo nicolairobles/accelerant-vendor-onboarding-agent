@@ -8,12 +8,14 @@ The production-grade shape is:
 
 ```text
 source case package
+  -> upload staging and package guardrails
   -> deterministic ingestion
   -> normalized Pydantic schemas
   -> deterministic policy/tool checks
   -> decision packet + trace
   -> optional LLM summary/drafts with structured output
-  -> Streamlit review cockpit
+  -> Streamlit case queue + review cockpit
+  -> workbook/packet exports
   -> eval harness + CI
   -> private deployment
 ```
@@ -35,6 +37,7 @@ The first working version should not depend on an LLM to make policy decisions.
 
 Use code for:
 
+- upload staging, file-role classification, and package-shape guardrails
 - file parsing
 - money calculations
 - duplicate vendor check
@@ -90,6 +93,22 @@ Evidence fields:
 - policy reference when applicable
 
 This is what makes the prototype defensible in the Jay/Venkat walkthrough.
+
+### 3a. Treat uploaded files as untrusted intake
+
+Reviewer-uploaded packages should be validated before they enter the core pipeline.
+
+Upload guardrails:
+
+- enforce file count and size limits
+- safely expand zip files and ignore path traversal members
+- require content or name confidence before assigning a required artifact role
+- avoid treating policy docs or arbitrary markdown as security questionnaires
+- block packages that appear to mix multiple vendor cases
+- map optional support artifacts separately from required artifacts
+- update checklist evidence when optional support docs are present
+
+This keeps the upload mode useful for reviewer testing without weakening the deterministic policy workflow.
 
 ### 4. Evals before model polish
 
@@ -217,6 +236,7 @@ For the take-home, these should be represented lightly in code, docs, and the fi
 - `pytest` passes.
 - `python -m vendor_agent.cli eval` passes.
 - Streamlit smoke test passes locally.
+- Upload edge-case tests pass.
 - Deployed app loads all three cases.
 - README setup works from a fresh clone.
 

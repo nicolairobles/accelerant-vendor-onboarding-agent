@@ -1,0 +1,3 @@
+Workspace Depot W-9 / tax setup form
+
+Synthetic test artifact. Tax documentation supplied for procurement setup.

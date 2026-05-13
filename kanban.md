@@ -67,6 +67,12 @@ kanban-plugin: board
 - [x] Write final QA assessment
 - [x] Implement uploaded vendor package mode
 - [x] Add upload-mode regression tests
+- [x] Add dashboard-first procurement case queue
+- [x] Add upload guardrails for policy docs, corrupt files, mixed-vendor packages, prompt injection, and optional support artifacts
+- [x] Add agent workflow panel aligned to source process-flow PNG
+- [x] Add XLSX triage workbook export
+- [x] Update requirements, acceptance matrix, architecture, UX spec, and README for dashboard/upload guardrail pass
+- [x] Add generated sample upload packets and zips for manual QA
 
 %% kanban:settings
 ```

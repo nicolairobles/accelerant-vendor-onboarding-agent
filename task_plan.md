@@ -11,14 +11,16 @@ Goal: build the Accelerant vendor onboarding prototype with explicit requirement
 | 3. Requirements control plane | Complete | Requirements register, acceptance matrix, AI guardrails, and GitHub templates created. |
 | 4. Deterministic core implementation | Complete | CLI emits valid decision packets for all three cases. |
 | 5. Policy routing and eval harness | Complete | All three cases pass deterministic evals. |
-| 6. Streamlit review cockpit | Complete | Reviewer can inspect overview, findings, evidence, drafts, and trace locally. |
-| 7. Packaging and deployment | Pending | Private repo and deployed reviewer app are ready. |
+| 6. Streamlit review cockpit | Complete | Reviewer starts from a case queue, drills into cases, and inspects overview, workflow, findings, evidence, drafts, and trace locally. |
+| 7. Upload guardrails and edge-case coverage | Complete | Upload mode validates required files, maps optional support artifacts, and blocks high-risk ambiguous packages. |
+| 8. Sample upload packets | Complete | Reviewer can manually upload valid, invalid, and guardrail zips from `data/sample-upload-packets/zips`. |
+| 9. Packaging and deployment | Pending | Private repo and deployed reviewer app are ready. |
 
 ## Current Decision
 
 The Kanban remains useful for execution state, but requirements live in `docs/requirements/requirements-register.md` and verification lives in `docs/requirements/acceptance-matrix.md`.
 
-The deterministic pipeline, eval harness, Streamlit cockpit, and core submission docs are implemented locally. External deployment remains pending.
+The deterministic pipeline, eval harness, dashboard-first Streamlit cockpit, upload guardrails, workbook export, and core submission docs are implemented locally. External redeployment after this UI/guardrail pass remains pending.
 
 ## Errors Encountered
 

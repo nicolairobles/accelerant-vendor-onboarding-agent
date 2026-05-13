@@ -1,0 +1,5 @@
+Workspace Depot vendor setup form
+
+Payment method: ACH
+Remit contact: ap@workspacedepot.example
+Business owner approval: supplied
