@@ -124,17 +124,19 @@ def main() -> None:
 
 
 @st.cache_data(show_spinner=False)
-def _run_sample_case_cached(case_id: str):
+def _run_sample_case_cached(case_id: str, runtime_signature: str):
+    _ = runtime_signature
     return run_case(CASES_ROOT / case_id)
 
 
 @st.cache_data(show_spinner=False)
-def _sample_packets():
+def _sample_packets(runtime_signature: str):
+    _ = runtime_signature
     return {case_id: run_case(CASES_ROOT / case_id) for case_id in CASE_OPTIONS}
 
 
 def render_dashboard() -> None:
-    packets = _sample_packets()
+    packets = _sample_packets(_synthesis_runtime_signature())
     rows = [_case_queue_row(case_id, packet) for case_id, packet in packets.items()]
     blocked_count = len([packet for packet in packets.values() if packet.status == "blocked"])
     high_risk_count = len([packet for packet in packets.values() if packet.facts.risk.tier == "high"])
@@ -180,7 +182,7 @@ def _run_sample_case(selected_case: str, run_clicked: bool) -> None:
     context_key = "sample:%s" % selected_case
     if run_clicked or st.session_state.get("packet_context") != context_key:
         with st.status("Running triage", expanded=False) as status:
-            packet = _run_sample_case_cached(selected_case)
+            packet = _run_sample_case_cached(selected_case, _synthesis_runtime_signature())
             st.session_state["packet"] = packet
             st.session_state["packet_context"] = context_key
             st.session_state["input_mode"] = "Review sample case"
@@ -997,6 +999,13 @@ def _clear_upload_workspace() -> None:
     workspace = st.session_state.get("upload_workspace")
     if workspace and Path(workspace).exists():
         shutil.rmtree(workspace, ignore_errors=True)
+
+
+def _synthesis_runtime_signature() -> str:
+    provider = os.getenv("OPENAI_SYNTHESIS_PROVIDER", "deterministic").lower()
+    model = os.getenv("OPENAI_SYNTHESIS_MODEL", "")
+    key_state = "key" if os.getenv("OPENAI_API_KEY") else "no-key"
+    return "%s|%s|%s" % (provider, model, key_state)
 
 
 st.markdown(
