@@ -6,13 +6,16 @@ The product direction is an agentic procurement triage assistant: parse a vendor
 
 ## Current Status
 
-This repo is a standalone local workspace created outside Career OS so it can later become a clean private GitHub repository.
+This repo is a standalone private GitHub repository created outside Career OS for the Accelerant take-home.
+
+Deployed reviewer app: [accelerant-vendor-app-agent-5rcbcuzjbmdlpyenpfeay9.streamlit.app](https://accelerant-vendor-app-agent-5rcbcuzjbmdlpyenpfeay9.streamlit.app/)
 
 Current artifacts:
 
 - `data/source-package/` - original candidate package and extracted files.
 - `docs/research/prototype-strategy-research.md` - first architecture/deployment strategy memo.
 - `docs/research/prototype-strategy-review.md` - critique of the first memo.
+- `docs/research/llm-synthesis-assessment.md` - assessment of where LLM synthesis should and should not be added.
 - `docs/product/streamlit-product-ux-spec.md` - product and UX target for the Streamlit app.
 - `docs/implementation/implementation-roadmap.md` - milestone plan and production best-practices synthesis.
 - `docs/requirements/requirements-control-plane.md` - requirements tracking and AI-assisted build guardrail strategy.
@@ -67,6 +70,55 @@ The CLI writes:
 - `outputs/<case_id>.json` - structured decision packet
 - `outputs/<case_id>.trace.json` - deterministic workflow trace
 - `evals/reports/eval_report.json` - all-case regression eval report
+
+## Reviewer Walkthrough
+
+1. Open the deployed Streamlit app.
+2. Review the default `case_003` packet for TalentPulse AI. This shows the hardest case: high risk, insufficient budget, legal/security/finance routing, missing vendor documents, evidence, drafts, and trace.
+3. Use the tabs to inspect how the packet is grounded:
+   - `Overview` for the procurement summary and next actions.
+   - `Findings` for policy-specific blockers.
+   - `Evidence` for source-linked extracted facts.
+   - `Drafts` for human-reviewed vendor and internal follow-up text.
+   - `Trace` for deterministic parser/tool/rule execution.
+4. Use the sidebar to switch between sample cases and run triage again.
+5. Switch to `Upload package` to test a new vendor package. Upload either five files or one zip containing an intake workbook, quote CSV, contract PDF, security questionnaire, and vendor email. The uploaded files are staged temporarily and evaluated by the same deterministic pipeline.
+
+## Screenshots
+
+### Default Case Overview
+
+![Sample case overview](docs/assets/screenshots/sample-case-overview.png)
+
+### Evidence Review
+
+![Evidence tab](docs/assets/screenshots/sample-case-evidence.png)
+
+### Upload Mode
+
+![Upload mode](docs/assets/screenshots/upload-mode-empty.png)
+
+### Uploaded Zip Result
+
+![Uploaded zip result](docs/assets/screenshots/upload-zip-result.png)
+
+## Deployment QA
+
+Deployment smoke tests were run on May 13, 2026:
+
+- Streamlit deployed app opened successfully in Chrome.
+- Default sample case rendered the expected TalentPulse AI blocked packet.
+- Upload mode showed the expected missing-file validation before upload.
+- Uploaded zip package produced the expected Workspace Depot packet.
+- HTTP smoke check reached the deployed Streamlit app shell with a cookie jar.
+
+See `docs/quality/deployment-final-qa.md` for the full deployment QA notes.
+
+## LLM Synthesis Stance
+
+The submitted prototype intentionally keeps policy decisions deterministic. LLM synthesis can be useful later for summaries, vendor follow-up drafts, and internal notes, but it should sit behind the existing structured decision packet, schema validation, evidence checks, and eval gate. The app should continue to run without `OPENAI_API_KEY`.
+
+See `docs/research/llm-synthesis-assessment.md` for the recommended architecture and eval plan.
 
 ## Confidentiality
 

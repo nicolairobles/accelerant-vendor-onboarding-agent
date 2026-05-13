@@ -22,11 +22,11 @@ Status values:
 | REQ-007 | Missing information detection | Exam: identify missing info | Must | Missing documents and unresolved questions are surfaced as actionable requests to vendor or internal owner. | Case eval baselines | Verified |
 | REQ-008 | Approval route | Exam: human-in-loop signoffs | Must | Output states required reviewers and explicitly prevents autonomous approval or spend commitment. | Case eval plus UI review | Verified |
 | REQ-009 | Tool/function trace | Exam: include tools/function calls | Must | Every parser/tool/rule call emits a trace entry with inputs, outputs, status, timing, and evidence IDs when applicable. | Trace schema validation | Verified |
-| REQ-010 | Streamlit review cockpit | Exam: working prototype usable by others | Must | App lets reviewer select a case, run triage, inspect overview, findings, evidence, drafts, and trace, and export outputs. | Streamlit smoke test plus manual UX checklist | Implemented |
+| REQ-010 | Streamlit review cockpit | Exam: working prototype usable by others | Must | App lets reviewer select a case, run triage, inspect overview, findings, evidence, drafts, and trace, and export outputs. | Streamlit smoke test plus manual UX checklist | Verified |
 | REQ-011 | Draft outputs | Product judgment | Should | System drafts vendor follow-up and internal ticket text, clearly labeled as drafts. | Snapshot/human review | Verified |
 | REQ-012 | Eval harness | Exam: reproducible results; production judgment | Must | All three cases have expected baselines and a CLI eval command that fails on regressions. | `python3 -m vendor_agent.cli eval` | Verified |
 | REQ-013 | Reproducible CLI | Exam: runnable repo | Must | Fresh clone can run CLI without Streamlit and produce deterministic JSON outputs. | README command smoke test | Verified |
-| REQ-014 | Deployment path | Exam: deployed environment usable by others | Must | Private deployed Streamlit app can run all cases with no local setup. | Deployed smoke test | Proposed |
+| REQ-014 | Deployment path | Exam: deployed environment usable by others | Must | Private deployed Streamlit app can run all cases with no local setup. | Deployed smoke test | Verified |
 | REQ-015 | Productionization narrative | Exam: explain production path | Must | Docs explain architecture, guardrails, monitoring, evals, human workflow, and enterprise system integrations. | Document review | Implemented |
 | REQ-016 | Confidentiality and secrets | Interview/package sensitivity | Must | Candidate package remains private; no secrets committed; `.env.example` documents env vars only. | Git status and secret scan/manual review | Verified |
 | REQ-017 | AI-assisted development guardrails | Vibe-coded project risk | Must | Repo contains local AI instructions, requirement register, acceptance matrix, issue form, and PR checklist. | File presence plus review | Verified |
@@ -42,6 +42,6 @@ Status values:
 ## Implementation Notes
 
 - `REQ-001` through `REQ-009` are verified across all three provided cases by `python3 -m vendor_agent.cli eval`.
-- `REQ-010` is verified locally with Streamlit app tests and isolated browser smoke checks.
-- `REQ-014` remains pending because no private hosted deployment has been created yet.
+- `REQ-010` is verified locally and in the deployed Streamlit app.
+- `REQ-014` is verified with the deployed Streamlit app, default sample run, upload validation, uploaded zip run, and HTTP cookie-jar smoke check.
 - `REQ-018` is verified for multi-file uploads, zip uploads, and missing-file validation.

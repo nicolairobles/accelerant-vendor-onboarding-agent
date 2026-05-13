@@ -13,11 +13,11 @@ This matrix defines how we know each requirement is actually satisfied.
 | REQ-007 | Missing info eval | `evals/seed-cases.json` | Missing vendor/internal info matches expected baseline per case. | Verified |
 | REQ-008 | Approval route eval | `python3 -m vendor_agent.cli eval` | Approval route matches expected reviewers and never grants final approval. | Verified |
 | REQ-009 | Trace validation | `outputs/case_*.trace.json` | Trace includes tool names, inputs, outputs, timing, and status. | Verified |
-| REQ-010 | UI smoke test | `streamlit run app.py` | Reviewer can run all three cases and inspect Overview, Findings, Evidence, Drafts, Trace. | Implemented; HTTP 200 local smoke passed |
+| REQ-010 | UI smoke test | `streamlit run app.py` and deployed Streamlit app | Reviewer can run all three cases and inspect Overview, Findings, Evidence, Drafts, Trace. | Verified |
 | REQ-011 | Draft quality review | Decision packets and UI Drafts tab | Drafts are actionable, labeled drafts, and avoid approval/commitment language. | Verified |
 | REQ-012 | Eval harness | `python3 -m vendor_agent.cli eval` | All seeded cases pass; failures show actionable diff. | Verified |
 | REQ-013 | Fresh-clone smoke test | README commands | Setup and CLI commands work from a clean environment. | Verified locally |
-| REQ-014 | Deployed smoke test | Streamlit URL | Deployed app loads and runs all cases without local files from reviewer. | Not started |
+| REQ-014 | Deployed smoke test | Streamlit URL | Deployed app loads and runs all cases without local files from reviewer. | Verified |
 | REQ-015 | Document review | `ARCHITECTURE.md`, `PRODUCTIONIZATION.md`, README | Docs explain architecture, product judgment, evals, guardrails, and production path. | Implemented |
 | REQ-016 | Confidentiality review | `.gitignore`, `.env.example`, git status | No secrets; repo stays private; package handling is explicit. | Verified locally |
 | REQ-017 | Guardrail files review | `AGENTS.md`, `.github/`, `docs/requirements/` | AI/build guardrails exist and are referenced by future work. | Verified |

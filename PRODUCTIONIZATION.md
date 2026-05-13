@@ -121,10 +121,17 @@ Submission deployment:
 1. Keep repo private.
 2. Verify `python3 -m pytest -q`.
 3. Verify `python3 -m vendor_agent.cli eval`.
-4. Deploy Streamlit app privately.
+4. Deploy Streamlit app.
 5. Configure secrets only if LLM synthesis is added.
 6. Smoke test all three sample cases in the deployed app.
 7. Smoke test upload mode with a zip and with missing-file validation.
+
+Current deployment:
+
+- Streamlit app: https://accelerant-vendor-app-agent-5rcbcuzjbmdlpyenpfeay9.streamlit.app/
+- Repository: private GitHub repository under `nicolairobles/accelerant-vendor-onboarding-agent`
+- No secrets are required for the deterministic build.
+- Reviewer access should be validated from a clean browser or intended reviewer account before final submission.
 
 Production deployment:
 
