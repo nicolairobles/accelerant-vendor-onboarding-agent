@@ -1,5 +1,6 @@
-import json
 import html
+import importlib
+import json
 import shutil
 import tempfile
 from io import BytesIO
@@ -9,8 +10,22 @@ import pandas as pd
 import streamlit as st
 from openpyxl import Workbook
 
-from vendor_agent.pipeline import run_case
-from vendor_agent.uploads import UploadedArtifact, missing_role_labels, stage_uploaded_case
+import vendor_agent.pipeline as pipeline_module
+import vendor_agent.policies as policies_module
+import vendor_agent.uploads as uploads_module
+
+
+# Streamlit Community Cloud can hot-reload app.py while keeping previously
+# imported project modules alive. Refresh the internal modules so deployed
+# upload behavior always matches the checked-out source revision.
+policies_module = importlib.reload(policies_module)
+uploads_module = importlib.reload(uploads_module)
+pipeline_module = importlib.reload(pipeline_module)
+
+run_case = pipeline_module.run_case
+UploadedArtifact = uploads_module.UploadedArtifact
+missing_role_labels = uploads_module.missing_role_labels
+stage_uploaded_case = uploads_module.stage_uploaded_case
 
 
 PACKAGE_ROOT = Path("data/source-package/Candidate_package")
@@ -347,17 +362,21 @@ def render_upload_details(uploaded_case) -> None:
     if not uploaded_case:
         return
     with st.expander("Uploaded package mapping"):
-        if uploaded_case.role_matches:
+        role_matches = getattr(uploaded_case, "role_matches", [])
+        optional_matches = getattr(uploaded_case, "optional_matches", [])
+        warnings = getattr(uploaded_case, "warnings", [])
+        unmatched_files = getattr(uploaded_case, "unmatched_files", [])
+        if role_matches:
             rows = [
                 {
                     "Role": match.role.replace("_", " ").title(),
                     "Uploaded file": match.uploaded_name,
                     "Staged file": match.staged_name,
                 }
-                for match in uploaded_case.role_matches
+                for match in role_matches
             ]
             st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
-        if uploaded_case.optional_matches:
+        if optional_matches:
             st.caption("Support artifacts")
             support_rows = [
                 {
@@ -365,14 +384,14 @@ def render_upload_details(uploaded_case) -> None:
                     "Uploaded file": match.uploaded_name,
                     "Staged file": match.staged_name,
                 }
-                for match in uploaded_case.optional_matches
+                for match in optional_matches
             ]
             st.dataframe(pd.DataFrame(support_rows), use_container_width=True, hide_index=True)
-        if uploaded_case.warnings:
-            for warning in uploaded_case.warnings:
+        if warnings:
+            for warning in warnings:
                 st.warning(warning)
-        if uploaded_case.unmatched_files:
-            st.caption("Ignored files: %s" % ", ".join(uploaded_case.unmatched_files))
+        if unmatched_files:
+            st.caption("Ignored files: %s" % ", ".join(unmatched_files))
 
 
 def render_upload_feedback() -> None:
