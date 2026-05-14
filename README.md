@@ -18,34 +18,31 @@ The app is a procurement-owner triage assistant. It reads a synthetic vendor onb
 
 ## Architecture
 
-The core design choice is deterministic policy decisioning with optional LLM synthesis only after a validated decision packet exists. The system is intentionally not an autonomous approval agent.
-
-```mermaid
-flowchart LR
-    A["Vendor package<br/>intake, email, quote, contract, questionnaire"] --> B["Inventory and upload staging"]
-    B --> C["Deterministic parsers"]
-    C --> D["Typed facts and evidence"]
-    D --> E["Tool checks<br/>budget, vendor register, TCV, risk"]
-    E --> F["Policy engine<br/>procurement, finance, legal, security"]
-    F --> G["DecisionPacket<br/>status, blockers, route, evidence, trace"]
-    G --> H["Streamlit reviewer workflow"]
-    G --> I["CLI, JSON, trace, Markdown, XLSX exports"]
-    G --> J["Optional reviewer synthesis<br/>summary and drafts only"]
-```
+The core design choice is deterministic policy decisioning with optional LLM synthesis only after a validated decision packet exists. The workflow mirrors the process-flow image from the exercise package: validate the package first, split incomplete requests into follow-up, and route complete requests through deterministic tools before the human approval gate.
 
 ```mermaid
 flowchart TB
-    A["DecisionPacket is source of truth"] --> B["Deterministic decisions"]
-    B --> C["Risk tier"]
-    B --> D["Budget status"]
-    B --> E["Missing information"]
-    B --> F["Required reviewers"]
-    A --> G["Optional LLM synthesis"]
-    G --> H["Reviewer brief"]
-    G --> I["Vendor follow-up draft"]
-    G --> J["Internal note draft"]
-    G -. "cannot override" .-> B
-    K["Human procurement owner"] --> L["Approve, reject, request info, or route internally"]
+    A(["Start: Vendor onboarding case package"])
+    B["Parse and extract inputs<br/>Intake Excel, vendor email, quote CSV,<br/>security questionnaire, contract PDF"]
+    C["Validate package<br/>Required documents, file roles, upload guardrails"]
+    D{"Complete enough<br/>for triage?"}
+
+    E["Normalize case facts<br/>Vendor, cost center, ACV, term,<br/>payment terms, data fields,<br/>subprocessors, AI training use"]
+    F["Run deterministic helper tools<br/>lookup_budget, check_existing_vendor,<br/>calculate_total_contract_value,<br/>classify_data_sensitivity"]
+    G["Determine approvals and risk tier<br/>Procurement, Finance, Legal, Security,<br/>Executive, Business Owner"]
+    H["Prepare outputs<br/>Decision packet, audit trace,<br/>triage workbook, draft procurement ticket"]
+
+    I["Identify missing or incomplete items"]
+    J["Draft vendor follow-up"]
+    K["Escalate to human"]
+
+    L{"Human approval gate<br/>Procurement owner reviews, edits,<br/>approves, rejects, or routes"}
+    M(["End: Decision packet ready for routing"])
+
+    A --> B --> C --> D
+    D -- "Yes" --> E --> F --> G --> H --> L
+    D -- "No or unclear" --> I --> J --> K --> L
+    L --> M
 ```
 
 More detail: [ARCHITECTURE.md](ARCHITECTURE.md) and [PRODUCTIONIZATION.md](PRODUCTIONIZATION.md).

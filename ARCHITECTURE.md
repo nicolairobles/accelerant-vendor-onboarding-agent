@@ -9,18 +9,63 @@ The system ingests a mixed vendor package, normalizes source facts into typed sc
 ## Flow
 
 ```mermaid
-flowchart LR
-    A["Case package or upload"] --> B["Inventory and staging guardrails"]
-    B --> C["Deterministic parsers"]
-    C --> D["Typed facts and evidence"]
-    D --> E["Budget, vendor, TCV, and risk tools"]
-    E --> F["Policy findings and missing-info detection"]
-    F --> G["Approval route"]
-    G --> H["DecisionPacket with trace"]
-    H --> I["Streamlit request queue"]
-    H --> J["CLI and exports"]
-    H --> K["Optional reviewer synthesis"]
+flowchart TB
+    A(["Start: Vendor onboarding case package"])
+    B["Parse and extract inputs<br/>Intake Excel, vendor email, quote CSV,<br/>security questionnaire, contract PDF"]
+    C["Validate package<br/>Required documents, file roles, upload guardrails"]
+    D{"Complete enough<br/>for triage?"}
+
+    E["Normalize case facts<br/>Vendor, cost center, ACV, term,<br/>payment terms, data fields,<br/>subprocessors, AI training use"]
+    F["Run deterministic helper tools<br/>lookup_budget, check_existing_vendor,<br/>calculate_total_contract_value,<br/>classify_data_sensitivity"]
+    G["Determine approvals and risk tier<br/>Procurement, Finance, Legal, Security,<br/>Executive, Business Owner"]
+    H["Prepare outputs<br/>Decision packet, audit trace,<br/>triage workbook, draft procurement ticket"]
+
+    I["Identify missing or incomplete items"]
+    J["Draft vendor follow-up"]
+    K["Escalate to human"]
+
+    L{"Human approval gate<br/>Procurement owner reviews, edits,<br/>approves, rejects, or routes"}
+    M(["End: Decision packet ready for routing"])
+
+    A --> B --> C --> D
+    D -- "Yes" --> E --> F --> G --> H --> L
+    D -- "No or unclear" --> I --> J --> K --> L
+    L --> M
 ```
+
+## Implementation View
+
+```mermaid
+flowchart LR
+    A["Streamlit app / CLI"] --> B["vendor_agent.pipeline"]
+    B --> C["inventory and uploads"]
+    B --> D["parsers"]
+    B --> E["tools"]
+    B --> F["policies"]
+    B --> G["synthesis"]
+    B --> H["tracing"]
+    C --> I["DecisionPacket"]
+    D --> I
+    E --> I
+    F --> I
+    G --> I
+    H --> I
+    I --> J["Reviewer UI"]
+    I --> K["JSON, trace, Markdown, XLSX exports"]
+```
+
+## Workflow Mapping
+
+| Provided workflow step | Prototype implementation |
+| --- | --- |
+| Parse and extract inputs | `vendor_agent.parsers` |
+| Validate package | `vendor_agent.inventory`, `vendor_agent.uploads` |
+| Normalize facts | `vendor_agent.schemas`, `vendor_agent.pipeline` |
+| Run helper tools | `vendor_agent.tools` |
+| Determine approvals and risk tier | `vendor_agent.policies` |
+| Draft follow-up | `vendor_agent.synthesis`, draft outputs |
+| Human approval gate | Streamlit request detail and audit workflow |
+| Decision packet | `DecisionPacket`, exports, trace |
 
 ## Key Modules
 
