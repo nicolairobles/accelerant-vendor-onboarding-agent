@@ -58,7 +58,7 @@ The app now better matches the original exam objective: it produces a structured
 - `python3 -m pytest -q` passed: 30 tests after the synthesis follow-up pass.
 - `python3 -m vendor_agent.cli eval` passed: 3/3 cases.
 - Local Streamlit browser smoke passed for dashboard, sample-case review, upload landing, and mobile dashboard.
-- Browser checks confirmed the old sidebar mode/human-gate copy is absent, missing-info actions are not rendered as checkboxes, request details lead with `Decision`, `Required Vendor Follow-up`, `Internal Review Route`, and `Audit details`, and the local OpenAI mode renders `Synthesis source: gpt-4o-mini-2024-07-18`.
+- Browser checks confirmed the old sidebar mode/human-gate copy is absent, missing-info actions are not rendered as checkboxes, request details lead with `Decision`, `Required Vendor Follow-up`, `Internal Review Route`, and `Audit details`; synthesis provider details stay inside audit validation rather than the first reviewer viewport.
 - Updated screenshot: `docs/assets/screenshots/productized-sample-case.png`.
 
 Remaining product limitations:
