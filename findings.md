@@ -54,6 +54,13 @@
 ## 2026-05-13 Upload Workflow Product Findings
 
 - The previous upload interaction created a temporary `uploaded_case`, but the UI did not make that model explicit enough. A reviewer could reasonably assume uploading TalentPulse artifacts would augment the locked TalentPulse sample case.
-- The corrected product model is: sample cases are immutable references; uploads create a scratch triage case that can optionally be compared to a matching sample baseline by vendor name.
-- The uploaded-case page should show the delta before the full review cockpit because the reviewer's first question is whether the new files resolved anything or introduced new blockers.
+- The interim corrected product model was: seeded cases are immutable references; uploads create a scratch triage case that can optionally be compared to a matching seeded baseline by vendor name.
+- The stronger product model moves that delta behind disclosure after the uploaded package becomes a request record, because the first viewport should stay focused on decision and next action.
 - Upload QA needs both baseline-matched packets and net-new packets. The new SupportFlow Assist packet covers the no-baseline path and tests DPA, SOC 2, subprocessor, and AI training opt-out recognition against data-handling policy expectations.
+
+## 2026-05-13 Request Queue Recalibration Findings
+
+- The stronger product model is not "sample case mode plus upload mode." It is one vendor request queue where the exam cases are seeded requests already in the system.
+- A submitted vendor package should become a remembered request record in the queue, at least for the current Streamlit session. Treating it only as a temporary run makes the app feel like a parser demo instead of a workflow tool.
+- Detail pages should reserve the first viewport for decision, next action, follow-up, route, and reviewer brief. Drafts, upload intake mapping, evidence, trace, workflow, and exports are useful but should sit behind disclosure.
+- Delete is part of the demo lifecycle. It does not need production authorization in this prototype, but the UI should make deletion explicit and keep `Restore Seeded Requests` available for resetting the demo queue.

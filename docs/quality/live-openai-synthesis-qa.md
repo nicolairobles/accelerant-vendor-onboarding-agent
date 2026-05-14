@@ -49,7 +49,7 @@ It does not decide status, risk tier, budget status, missing information, approv
   - vendor follow-up includes human-review language
   - cited evidence IDs returned
 - Browser smoke passed with Streamlit running in live-provider mode:
-  - dashboard rendered `Open Requests`
+  - dashboard rendered the queue-wide missing-information metric
   - sample case rendered `Reviewer Brief`, `Required Follow-up`, `Human Review Route`, and `Triage Workflow`
   - old implementation-mode sidebar copy and inert missing-item checkboxes were absent
 

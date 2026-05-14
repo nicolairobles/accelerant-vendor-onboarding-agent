@@ -31,7 +31,7 @@ The export buttons were useful for the exam submission but competed with the pri
 - Renamed `Required Human Route` to `Human Review Route` and moved the human-safety boundary into that decision context.
 - Renamed `Agent Workflow` to `Triage Workflow`.
 - Showed workflow stage, status, and result by default, with function calls behind an expander.
-- Renamed the dashboard count to `Open Requests` and clarified that it is queue-wide.
+- Renamed the dashboard count to `Missing Items` and clarified that it is queue-wide.
 - Moved packet, trace, brief, and workbook downloads into an `Export decision packet` expander.
 - Kept the Drafts acknowledgement checkbox because it gates editing and therefore has a real effect; subject and body are both disabled until acknowledgement.
 - Added regression coverage so missing-info actions are not rendered as checkboxes.
@@ -39,6 +39,12 @@ The export buttons were useful for the exam submission but competed with the pri
 ## Follow-Up Action Cockpit Pass
 
 The next product issue was that the case page still exposed too much packet detail before making the reviewer's job clear. The page now starts with an `Action Cockpit` that shows the decision, next action, and owner. The case page then shows the reviewer brief, required vendor follow-up, internal review route, and editable `AI-Assisted Drafts`.
+
+## Request Queue Recalibration
+
+The later product issue was that the app still exposed a builder-centric split between sample review and upload modes. That has been corrected: the three exam cases now appear as seeded vendor requests in one queue, uploaded packages create new session request records, request rows open details, and request records can be deleted during the demo session.
+
+The request detail view now leads with `Decision`, required vendor follow-up, internal route, and reviewer brief. Drafts, upload intake details, staged mapping, evidence, workflow, trace, and exports are behind disclosure so the first viewport is less noisy.
 
 Detailed policy findings, evidence, workflow, trace, and export controls now live under `Audit details`. This preserves exam traceability without making the primary review path feel like a debug page.
 
@@ -52,7 +58,7 @@ The app now better matches the original exam objective: it produces a structured
 - `python3 -m pytest -q` passed: 30 tests after the synthesis follow-up pass.
 - `python3 -m vendor_agent.cli eval` passed: 3/3 cases.
 - Local Streamlit browser smoke passed for dashboard, sample-case review, upload landing, and mobile dashboard.
-- Browser checks confirmed the old sidebar mode/human-gate copy is absent, missing-info actions are not rendered as checkboxes, `Action Cockpit`, `Required Vendor Follow-up`, `Internal Review Route`, `AI-Assisted Drafts`, and `Audit details` are visible, and the local OpenAI mode renders `Synthesis source: gpt-4o-mini-2024-07-18`.
+- Browser checks confirmed the old sidebar mode/human-gate copy is absent, missing-info actions are not rendered as checkboxes, request details lead with `Decision`, `Required Vendor Follow-up`, `Internal Review Route`, and `Audit details`, and the local OpenAI mode renders `Synthesis source: gpt-4o-mini-2024-07-18`.
 - Updated screenshot: `docs/assets/screenshots/productized-sample-case.png`.
 
 Remaining product limitations:

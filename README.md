@@ -27,7 +27,7 @@ Current artifacts:
 - `docs/quality/dashboard-upload-guardrail-qa.md` - QA notes for the dashboard, process-flow, workbook, and upload guardrail pass.
 - `docs/quality/productization-ux-audit.md` - QA notes for the reviewer-facing UX cleanup.
 - `docs/quality/png-workflow-and-synthesis-assessment.md` - assessment of the provided process-flow PNG and the synthesis boundary.
-- `docs/quality/upload-workflow-delta-qa.md` - QA notes for the temporary upload-case model and package delta.
+- `docs/quality/upload-workflow-delta-qa.md` - QA notes for the request-queue model and uploaded-request behavior.
 - `AGENTS.md` - repo-local AI coding guardrails.
 - `kanban.md` - Obsidian Kanban board for build work.
 - `task_plan.md`, `findings.md`, `progress.md` - persistent planning memory for longer AI-assisted sessions.
@@ -56,7 +56,7 @@ python3 -m pytest -q
 streamlit run app.py
 ```
 
-The deterministic pipeline is implemented for all three cases. The Streamlit app opens on a procurement case queue, then lets reviewers drill into sample cases or upload a new package.
+The deterministic pipeline is implemented for all three seeded exam requests. The Streamlit app opens on a procurement request queue. Reviewers can open any existing vendor request, submit a new package into the queue, and delete request records during a demo session.
 
 The Streamlit app also supports an uploaded single-vendor package. Upload either the five required files or a zip containing them:
 
@@ -66,9 +66,9 @@ The Streamlit app also supports an uploaded single-vendor package. Upload either
 - security questionnaire (`.md`)
 - vendor email (`.txt`)
 
-Uploaded files create a temporary standalone triage case. They do not add files to or mutate the locked sample cases. The app shows a `Package Delta` before the full case details so reviewers can see whether the upload matched a sample baseline, which support artifacts were recognized, what requests were resolved, and what blockers remain.
+Uploaded files create a new request record in Streamlit session state. They do not mutate the seeded exam requests. Uploaded request details include intake mapping and baseline comparison behind disclosure so reviewers can inspect what was recognized without crowding the primary decision view.
 
-Upload mode also recognizes optional support artifacts such as DPA, SOC 2, subprocessor list, tax form, vendor setup form, and AI training opt-out confirmation. Ambiguous or mixed-vendor packages are blocked before triage.
+The submit flow also recognizes optional support artifacts such as DPA, SOC 2, subprocessor list, tax form, vendor setup form, and AI training opt-out confirmation. Ambiguous or mixed-vendor packages are blocked before triage.
 
 ## Sample Upload Packets
 
@@ -99,25 +99,25 @@ The CLI writes:
 ## Reviewer Walkthrough
 
 1. Open the deployed Streamlit app.
-2. Start on the dashboard case queue. Use it to compare case status, risk, spend, missing information, blockers, and next owner.
-3. Switch to `Review sample case` and open `case_003` for TalentPulse AI. This shows the hardest case: high risk, insufficient budget, legal/security/finance routing, and missing vendor documents.
-4. Start with `Action Cockpit`. It shows the decision, next action, owner, reviewer brief, required vendor follow-up, and internal review route.
-5. Use `AI-Assisted Drafts` for editable vendor follow-up and internal note text. These drafts still require human approval before use.
+2. Start on `Vendor Requests`. Use the queue to compare request status, risk, spend, missing information, blockers, and next owner.
+3. Open `TalentPulse AI` from the queue. This shows the hardest seeded request: high risk, insufficient budget, legal/security/finance routing, and missing vendor documents.
+4. Start with `Decision`. It shows the status, next action, owner, reviewer brief, required vendor follow-up, and internal review route.
+5. Open `Drafts` for editable vendor follow-up and internal note text. These drafts still require human approval before use.
 6. Open `Audit details` only when you need supporting commercial context, policy findings, evidence, workflow, trace, or exports.
 7. In `Audit details`, use `Exports` to download JSON, trace, Markdown brief, or the XLSX triage workbook.
-8. Switch to `Triage new package` to test a new vendor package. Upload either five files or one zip containing an intake workbook, quote CSV, contract PDF, security questionnaire, and vendor email. Optional support artifacts are mapped separately and reflected in the staged checklist. Use `high_risk_ai_with_support_artifacts.zip` to see a matched TalentPulse baseline delta, or `net_new_supportflow_complete.zip` to see a net-new vendor with no sample baseline.
+8. Choose `Submit New Request` to test a new vendor package. Upload either five files or one zip containing an intake workbook, quote CSV, contract PDF, security questionnaire, and vendor email. Optional support artifacts are mapped separately and reflected in the staged checklist. Use `net_new_supportflow_complete.zip` to add a net-new vendor request to the queue.
 
 ## Screenshots
 
-### Dashboard Case Queue
+### Vendor Request Queue
 
-![Dashboard case queue](docs/assets/screenshots/dashboard-case-queue.png)
+![Vendor request queue](docs/assets/screenshots/dashboard-case-queue.png)
 
-### Productized Sample Case
+### Productized Vendor Request
 
-![Productized sample case](docs/assets/screenshots/productized-sample-case.png)
+![Productized vendor request](docs/assets/screenshots/productized-sample-case.png)
 
-### Upload Workspace
+### Submit New Request
 
 ![Upload workspace](docs/assets/screenshots/upload-workspace.png)
 
@@ -126,8 +126,8 @@ The CLI writes:
 Deployment smoke tests were run on May 13, 2026:
 
 - Streamlit deployed app opened successfully in Chrome.
-- Default sample case rendered the expected TalentPulse AI blocked packet.
-- Upload mode showed the expected missing-file validation before upload.
+- Seeded TalentPulse AI request rendered the expected blocked packet.
+- Submit-new-request flow showed the expected missing-file validation before upload.
 - Uploaded zip package produced the expected Workspace Depot packet.
 - HTTP smoke check reached the deployed Streamlit app shell with a cookie jar.
 

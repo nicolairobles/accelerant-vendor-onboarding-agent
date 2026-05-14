@@ -99,27 +99,19 @@ Source: [W3C WAI accessibility principles](https://www.w3.org/WAI/fundamentals/a
 
 ```text
 Sidebar
-  Workspace selector
-    Dashboard
-    Review sample case
-    Triage new package
-  Case selector or uploader by workspace
+  Vendor Requests
+  Submit New Request
+  Restore Seeded Requests
 
 Main
   Header: Vendor Onboarding Triage
-  Dashboard: vendor case queue
-  Upload detail: package delta for matched baseline or net-new vendor
-  Status banner
-  Key metrics row
+  Dashboard: vendor request queue
+  Request detail: status banner and key metrics
   Required follow-up panel
   Human review route panel
-  Triage workflow progress
-  Tabs
-    Overview
-    Findings
-    Evidence
-    Drafts
-    Trace
+  Drafts behind disclosure
+  Upload intake details behind disclosure for uploaded requests
+  Audit details behind disclosure
 ```
 
 ## First Screen Wireframe
@@ -127,16 +119,16 @@ Main
 ```text
 +---------------------------------------------------------------+
 | Vendor Onboarding Triage                                      |
-| Procurement case queue and evidence-backed review packets.     |
+| Procurement request queue and evidence-backed review packets.  |
 +----------------------+----------------------------------------+
-| Sidebar              | Vendor Case Queue                      |
-| Workspace            | Cases  Blocked  High Risk  Open Reqs   |
-| [Dashboard v]        | 3      3        2          10          |
+| Sidebar              | Vendor Requests                        |
+| Vendor Requests      | Requests Blocked Ready  Missing Items  |
+| Submit New Request   | 3        3       0      10             |
 |                      +----------------------------------------+
-|                      | Case     Vendor       Status  Next     |
-|                      | 001      Northstar    Blocked Legal    |
-|                      | 002      Workspace    Blocked Proc     |
-|                      | 003      TalentPulse  Blocked Finance  |
+|                      | Request Vendor       Status  Next      |
+|                      | VR-001  Northstar    Blocked Legal     |
+|                      | VR-002  Workspace    Blocked Proc      |
+|                      | VR-003  TalentPulse  Blocked Finance   |
 |                      +----------------------------------------+
 |                      | Required Follow-up                    |
 |                      | 1. Request SOC 2 Type II               |
@@ -148,7 +140,7 @@ Main
 | JSON / MD / Trace    | Business Owner -> Procurement ->       |
 |                      | VP Finance -> Legal -> Security        |
 +----------------------+----------------------------------------+
-| Tabs: Overview | Findings | Evidence | Drafts | Trace          |
+| Disclosure: Drafts | Audit details | Upload intake details |
 +---------------------------------------------------------------+
 ```
 
@@ -183,13 +175,16 @@ Purpose: answer "what needs attention first?"
 
 Components:
 
-- Case queue with status, risk, ACV, TCV, budget status, missing-info count, blocker count, and next owner.
-- Queue metrics for total cases, blocked cases, high-risk cases, and queue-wide open information requests.
+- Request queue with status, risk, ACV, TCV, budget status, missing-info count, source, open action, and next owner.
+- Queue metrics for total requests, blocked requests, ready-for-review requests, and queue-wide open information requests.
 - Priority list that turns the first missing item or blocker into the next procurement action.
 
 Product rule:
 
-- The app should not land on a single default case. A single case can be the default only after the reviewer chooses the review workspace.
+- The app should not land on a single default case.
+- Seeded exam cases should look like existing vendor requests, not a separate sample-case mode.
+- Uploading a valid vendor package should add a new request record to the queue for the current Streamlit session.
+- Deleting a request should remove it from the current session queue, with a reset option for the demo seed data.
 
 ## Triage Workflow Panel
 

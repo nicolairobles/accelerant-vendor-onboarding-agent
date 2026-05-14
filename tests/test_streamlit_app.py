@@ -17,43 +17,54 @@ def test_streamlit_app_renders_dashboard_homepage():
 
     assert not app.exception
     assert any("Vendor Onboarding Triage" in item.value for item in app.title)
-    assert any("Vendor Case Queue" in item.value for item in app.subheader)
+    assert any("Vendor Requests" in item.value for item in app.subheader)
     assert any("Queue Priorities" in item.value for item in app.subheader)
-    assert any("Open Requests" in item.label for item in app.metric)
+    assert any("Missing Items" in item.label for item in app.metric)
+    assert any("Open Workspace Depot" in item.label for item in app.button)
 
 
-def test_streamlit_app_switches_to_low_risk_case():
+def test_streamlit_app_opens_seeded_request_from_dashboard():
     app = AppTest.from_file("app.py")
     app.run(timeout=30)
-    app.radio[0].set_value("Review sample case")
-    app.run(timeout=30)
-    app.selectbox[0].set_value("case_002 - Workspace Depot")
+    button_by_label(app, "Open Workspace Depot").click()
     app.run(timeout=30)
 
     assert not app.exception
     assert any("Workspace Depot" in item.value for item in app.markdown)
     assert any("Low" in item.value for item in app.metric)
-    assert any("Action Cockpit" in item.value for item in app.subheader)
+    assert any("Decision" in item.value for item in app.subheader)
     assert any("Required Vendor Follow-up" in item.value for item in app.subheader)
     assert any("Internal Review Route" in item.value for item in app.subheader)
-    assert any("AI-Assisted Drafts" in item.value for item in app.subheader)
-    assert any("Triage Workflow" in item.value for item in app.subheader)
     assert any("Reviewer Brief" in item.value for item in app.subheader)
-    assert any("Draft vendor follow-up" in item.label for item in app.text_area)
+    assert any("Drafts" in item.label for item in app.expander)
     assert any("Audit details" in item.label for item in app.expander)
+    assert any("Delete request" in item.label for item in app.button)
     assert not any("Updated tax form" in checkbox.label for checkbox in app.checkbox)
 
 
-def test_streamlit_app_upload_mode_explains_temporary_standalone_cases():
+def test_streamlit_app_submit_request_view_explains_queue_creation():
     app = AppTest.from_file("app.py")
     app.run(timeout=30)
-    app.radio[0].set_value("Triage new package")
+    button_by_label(app, "Submit New Request").click()
     app.run(timeout=30)
 
     assert not app.exception
-    assert any("Triage New Package" in item.value for item in app.subheader)
-    assert any("temporary standalone case" in item.value for item in app.info)
-    assert any("Uploads create a temporary standalone case" in item.value for item in app.caption)
+    assert any("Submit New Request" in item.value for item in app.subheader)
+    assert any("add a new request to the queue" in item.value for item in app.info)
+    assert any("Required: intake workbook" in item.value for item in app.caption)
+
+
+def test_streamlit_app_can_delete_request_from_detail_view():
+    app = AppTest.from_file("app.py")
+    app.run(timeout=30)
+    button_by_label(app, "Open Workspace Depot").click()
+    app.run(timeout=30)
+    button_by_label(app, "Delete request").click()
+    app.run(timeout=30)
+
+    assert not app.exception
+    assert any(item.label == "Requests" and item.value == "2" for item in app.metric)
+    assert not any("Workspace Depot" in item.label for item in app.button)
 
 
 def test_uploaded_support_artifacts_can_be_compared_to_sample_baseline(tmp_path):
@@ -144,3 +155,10 @@ def uploaded_fixture(uploaded_name: str, fixture_name: str) -> UploadedArtifact:
 
 def text_artifact(uploaded_name: str, text: str) -> UploadedArtifact:
     return UploadedArtifact(name=uploaded_name, content=text.encode("utf-8"))
+
+
+def button_by_label(app: AppTest, label: str):
+    for button in app.button:
+        if button.label == label:
+            return button
+    raise AssertionError("Could not find button %r. Buttons: %s" % (label, [button.label for button in app.button]))

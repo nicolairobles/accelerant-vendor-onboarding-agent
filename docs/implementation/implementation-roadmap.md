@@ -14,7 +14,7 @@ source case package
   -> deterministic policy/tool checks
   -> decision packet + trace
   -> optional LLM summary/drafts with structured output
-  -> Streamlit case queue + review cockpit
+  -> Streamlit request queue + review cockpit
   -> workbook/packet exports
   -> eval harness + CI
   -> private deployment

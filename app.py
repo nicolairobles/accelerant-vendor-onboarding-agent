@@ -4,6 +4,7 @@ import json
 import os
 import shutil
 import tempfile
+from datetime import datetime
 from io import BytesIO
 from pathlib import Path
 
@@ -76,53 +77,23 @@ _configure_streamlit_secret_env()
 
 
 def main() -> None:
+    _initialize_request_store()
+
     st.title("Vendor Onboarding Triage")
-    st.caption("Procurement case queue and evidence-backed review packets")
+    st.caption("Procurement request queue and evidence-backed review packets")
 
-    with st.sidebar:
-        workspace = st.radio(
-            "Workspace",
-            ["Dashboard", "Review sample case", "Triage new package"],
-        )
+    render_sidebar()
 
-    if workspace == "Dashboard":
-        st.session_state["input_mode"] = "Dashboard"
-        render_dashboard()
-    elif workspace == "Review sample case":
-        selected_label = st.sidebar.selectbox(
-            "Case",
-            [CASE_DISPLAY_NAMES[case_id] for case_id in CASE_OPTIONS],
-            index=2,
-        )
-        selected_case = selected_label.split(" - ", 1)[0]
-        refresh_clicked = st.sidebar.button("Refresh triage", type="primary", use_container_width=True)
-        _run_sample_case(selected_case, refresh_clicked)
-        packet = st.session_state.get("packet")
-        if packet and st.session_state.get("input_mode") == workspace:
-            render_packet(packet)
+    view = st.session_state.get("active_view", "queue")
+    active_request_id = st.session_state.get("active_request_id")
+
+    if view == "submit":
+        render_submit_request()
+    elif view == "detail" and active_request_id in st.session_state.get("vendor_requests", {}):
+        render_request_detail(active_request_id)
     else:
-        uploaded_files = st.sidebar.file_uploader(
-            "New package files",
-            type=["xlsx", "csv", "pdf", "md", "txt", "zip"],
-            accept_multiple_files=True,
-            help=(
-                "Upload intake workbook, quote CSV, contract PDF, security "
-                "questionnaire, vendor email, and optional support artifacts."
-            ),
-        )
-        st.sidebar.caption("Uploads create a temporary standalone case. They do not modify sample cases.")
-        st.sidebar.caption("Required: intake workbook, quote CSV, contract PDF, security questionnaire, vendor email.")
-        st.sidebar.caption("Optional: DPA, SOC 2, subprocessors, tax form, vendor setup form, AI opt-out confirmation.")
-        run_clicked = st.sidebar.button("Run new package", type="primary", use_container_width=True)
-        _run_uploaded_case(uploaded_files, run_clicked)
-        packet = st.session_state.get("packet")
-        if packet and st.session_state.get("input_mode") == workspace:
-            render_package_delta(packet, st.session_state.get("uploaded_case"))
-            render_packet(packet)
-            render_upload_details(st.session_state.get("uploaded_case"))
-        else:
-            render_upload_feedback()
-            render_upload_landing()
+        st.session_state["active_view"] = "queue"
+        render_dashboard()
 
 
 @st.cache_data(show_spinner=False)
@@ -137,36 +108,91 @@ def _sample_packets(runtime_signature: str):
     return {case_id: run_case(CASES_ROOT / case_id) for case_id in CASE_OPTIONS}
 
 
-def render_dashboard() -> None:
-    packets = _sample_packets(_synthesis_runtime_signature())
-    rows = [_case_queue_row(case_id, packet) for case_id, packet in packets.items()]
-    blocked_count = len([packet for packet in packets.values() if packet.status == "blocked"])
-    high_risk_count = len([packet for packet in packets.values() if packet.facts.risk.tier == "high"])
-    missing_count = sum(len(packet.missing_information) for packet in packets.values())
-
-    st.subheader("Vendor Case Queue")
-    metric_cols = st.columns(4)
-    metric_cols[0].metric("Cases", len(packets))
-    metric_cols[1].metric("Blocked", blocked_count)
-    metric_cols[2].metric("High Risk", high_risk_count)
-    metric_cols[3].metric("Open Requests", missing_count)
-    st.caption("Open Requests is queue-wide across all sample cases, not an additional case count.")
-
-    st.dataframe(
-        pd.DataFrame(rows),
-        use_container_width=True,
-        hide_index=True,
-        column_config={
-            "ACV": st.column_config.NumberColumn("ACV", format="$%d"),
-            "TCV": st.column_config.NumberColumn("TCV", format="$%d"),
-            "Missing": st.column_config.NumberColumn("Missing", format="%d"),
-            "Blockers": st.column_config.NumberColumn("Blockers", format="%d"),
-        },
+def _initialize_request_store(force: bool = False) -> None:
+    runtime_signature = _synthesis_runtime_signature()
+    needs_reset = (
+        force
+        or "vendor_requests" not in st.session_state
+        or st.session_state.get("request_store_signature") != runtime_signature
     )
+    if not needs_reset:
+        return
+
+    packets = _sample_packets(runtime_signature)
+    requests = {}
+    order = []
+    for index, case_id in enumerate(CASE_OPTIONS, start=1):
+        packet = packets[case_id]
+        requests[case_id] = {
+            "request_id": case_id,
+            "display_id": "VR-%03d" % index,
+            "packet": packet,
+            "source": "Seeded request",
+            "submitted_at": "Exam seed",
+            "uploaded_case": None,
+            "workspace": None,
+        }
+        order.append(case_id)
+
+    st.session_state["vendor_requests"] = requests
+    st.session_state["vendor_request_order"] = order
+    st.session_state["request_store_signature"] = runtime_signature
+    st.session_state["upload_request_counter"] = 0
+    st.session_state["next_request_display_number"] = len(CASE_OPTIONS) + 1
+    st.session_state["active_view"] = "queue"
+    st.session_state["active_request_id"] = None
+    st.session_state["upload_feedback"] = None
+
+
+def render_sidebar() -> None:
+    with st.sidebar:
+        st.subheader("Workspace")
+        if st.button("Vendor Requests", use_container_width=True):
+            st.session_state["active_view"] = "queue"
+            st.session_state["active_request_id"] = None
+            st.rerun()
+        if st.button("Submit New Request", type="primary", use_container_width=True):
+            st.session_state["active_view"] = "submit"
+            st.session_state["active_request_id"] = None
+            st.rerun()
+        st.caption("%s request(s) in queue" % len(_request_records()))
+        if st.session_state.get("active_request_id"):
+            record = _request_record(st.session_state["active_request_id"])
+            if record:
+                st.caption("Open: %s" % record["packet"].facts.vendor_name)
+        if st.button("Restore Seeded Requests", use_container_width=True):
+            _clear_uploaded_workspaces()
+            _initialize_request_store(force=True)
+            st.rerun()
+
+
+def render_dashboard() -> None:
+    records = _request_records()
+    packets = [record["packet"] for record in records]
+    blocked_count = len([packet for packet in packets if packet.status == "blocked"])
+    ready_count = len([packet for packet in packets if packet.status != "blocked"])
+    missing_count = sum(len(packet.missing_information) for packet in packets)
+
+    st.subheader("Vendor Requests")
+    metric_cols = st.columns(4)
+    metric_cols[0].metric("Requests", len(records))
+    metric_cols[1].metric("Blocked", blocked_count)
+    metric_cols[2].metric("Ready For Review", ready_count)
+    metric_cols[3].metric("Missing Items", missing_count)
+    st.caption("Missing Items is queue-wide across all vendor requests, not an additional request count.")
+
+    if not records:
+        st.info("No vendor requests are currently in the queue.")
+        if st.button("Restore seeded exam requests", type="primary"):
+            _initialize_request_store(force=True)
+            st.rerun()
+        return
+
+    render_request_queue(records)
 
     st.subheader("Queue Priorities")
     for packet in sorted(
-        packets.values(),
+        packets,
         key=lambda item: (
             item.status != "blocked",
             item.facts.risk.tier != "high",
@@ -180,17 +206,136 @@ def render_dashboard() -> None:
         )
 
 
-def _run_sample_case(selected_case: str, run_clicked: bool) -> None:
-    context_key = "sample:%s" % selected_case
-    if run_clicked or st.session_state.get("packet_context") != context_key:
-        with st.status("Running triage", expanded=False) as status:
-            packet = _run_sample_case_cached(selected_case, _synthesis_runtime_signature())
-            st.session_state["packet"] = packet
-            st.session_state["packet_context"] = context_key
-            st.session_state["input_mode"] = "Review sample case"
-            st.session_state["uploaded_case"] = None
-            st.session_state["upload_feedback"] = None
-            status.update(label="Triage complete", state="complete")
+def render_request_queue(records: list) -> None:
+    header = st.columns([0.75, 2.1, 1.05, 0.8, 0.9, 0.9, 1.3, 0.9, 0.9])
+    header[0].markdown("**Request**")
+    header[1].markdown("**Vendor**")
+    header[2].markdown("**Status**")
+    header[3].markdown("**Risk**")
+    header[4].markdown("**Budget**")
+    header[5].markdown("**Missing**")
+    header[6].markdown("**Next owner**")
+    header[7].markdown("**Source**")
+    header[8].markdown("**Actions**")
+    for record in records:
+        packet = record["packet"]
+        row = st.columns([0.75, 2.1, 1.05, 0.8, 0.9, 0.9, 1.3, 0.9, 0.9])
+        row[0].write(record["display_id"])
+        row[1].markdown("**%s**" % packet.facts.vendor_name)
+        row[1].caption(packet.facts.requesting_team)
+        row[2].write(_status_label(packet))
+        row[3].write(packet.facts.risk.tier.title())
+        row[4].write(packet.facts.budget.status.title())
+        row[5].write(len(packet.missing_information))
+        row[6].write(_next_owner(packet))
+        row[7].write(record["source"])
+        if row[8].button(
+            "Open %s" % packet.facts.vendor_name,
+            key="open_%s" % record["request_id"],
+            use_container_width=True,
+        ):
+            st.session_state["active_view"] = "detail"
+            st.session_state["active_request_id"] = record["request_id"]
+            st.rerun()
+
+
+def render_request_detail(request_id: str) -> None:
+    record = _request_record(request_id)
+    if not record:
+        st.session_state["active_view"] = "queue"
+        st.session_state["active_request_id"] = None
+        st.rerun()
+
+    packet = record["packet"]
+    nav_cols = st.columns([1, 1, 5])
+    if nav_cols[0].button("Back to requests", use_container_width=True):
+        st.session_state["active_view"] = "queue"
+        st.session_state["active_request_id"] = None
+        st.rerun()
+    if nav_cols[1].button("Delete request", use_container_width=True):
+        _delete_request(request_id)
+        st.session_state["active_view"] = "queue"
+        st.session_state["active_request_id"] = None
+        st.rerun()
+    nav_cols[2].caption(
+        "%s • %s • Submitted: %s"
+        % (record["display_id"], record["source"], record["submitted_at"])
+    )
+
+    render_packet(packet, request_id=request_id)
+    if record.get("uploaded_case"):
+        with st.expander("Upload intake details", expanded=False):
+            render_package_delta(packet, record["uploaded_case"], show_title=False)
+        render_upload_details(record["uploaded_case"], expanded=False)
+
+
+def render_submit_request() -> None:
+    st.subheader("Submit New Request")
+    st.info("Upload a complete vendor package to add a new request to the queue.")
+    uploaded_files = st.file_uploader(
+        "New package files",
+        type=["xlsx", "csv", "pdf", "md", "txt", "zip"],
+        accept_multiple_files=True,
+        help=(
+            "Upload intake workbook, quote CSV, contract PDF, security "
+            "questionnaire, vendor email, and optional support artifacts."
+        ),
+    )
+    st.caption("Required: intake workbook, quote CSV, contract PDF, security questionnaire, vendor email.")
+    st.caption("Optional: DPA, SOC 2, subprocessors, tax form, vendor setup form, AI opt-out confirmation.")
+    run_clicked = st.button("Add request to queue", type="primary", use_container_width=True)
+    _run_uploaded_case(uploaded_files, run_clicked)
+    render_upload_feedback()
+    render_upload_landing()
+
+
+def _request_records() -> list:
+    requests = st.session_state.get("vendor_requests", {})
+    order = st.session_state.get("vendor_request_order", [])
+    return [requests[request_id] for request_id in order if request_id in requests]
+
+
+def _request_record(request_id: str):
+    return st.session_state.get("vendor_requests", {}).get(request_id)
+
+
+def _add_uploaded_request(packet, uploaded_case, upload_workspace: Path) -> str:
+    counter = int(st.session_state.get("upload_request_counter", 0)) + 1
+    st.session_state["upload_request_counter"] = counter
+    request_id = "uploaded_%03d" % counter
+    display_number = int(st.session_state.get("next_request_display_number", len(CASE_OPTIONS) + 1))
+    st.session_state["next_request_display_number"] = display_number + 1
+    display_id = "VR-%03d" % display_number
+    record = {
+        "request_id": request_id,
+        "display_id": display_id,
+        "packet": packet,
+        "source": "Uploaded",
+        "submitted_at": datetime.now().strftime("%Y-%m-%d %H:%M"),
+        "uploaded_case": uploaded_case,
+        "workspace": str(upload_workspace),
+    }
+    st.session_state.setdefault("vendor_requests", {})[request_id] = record
+    st.session_state.setdefault("vendor_request_order", []).append(request_id)
+    return request_id
+
+
+def _delete_request(request_id: str) -> None:
+    record = st.session_state.get("vendor_requests", {}).pop(request_id, None)
+    st.session_state["vendor_request_order"] = [
+        item for item in st.session_state.get("vendor_request_order", []) if item != request_id
+    ]
+    if record and record.get("workspace"):
+        workspace = Path(record["workspace"])
+        if workspace.exists():
+            shutil.rmtree(workspace, ignore_errors=True)
+
+
+def _clear_uploaded_workspaces() -> None:
+    for record in _request_records():
+        workspace = record.get("workspace")
+        if workspace and Path(workspace).exists():
+            shutil.rmtree(workspace, ignore_errors=True)
 
 
 def _run_uploaded_case(uploaded_files, run_clicked: bool) -> None:
@@ -200,7 +345,6 @@ def _run_uploaded_case(uploaded_files, run_clicked: bool) -> None:
         st.error("Upload the required vendor package files before running triage.")
         return
 
-    _clear_upload_workspace()
     upload_workspace = Path(tempfile.mkdtemp(prefix="accelerant_vendor_upload_"))
     st.session_state["upload_workspace"] = str(upload_workspace)
 
@@ -214,7 +358,7 @@ def _run_uploaded_case(uploaded_files, run_clicked: bool) -> None:
         except Exception as exc:
             st.session_state["packet"] = None
             st.session_state["packet_context"] = "upload:error"
-            st.session_state["input_mode"] = "Triage new package"
+            st.session_state["input_mode"] = "Submit New Request"
             st.session_state["upload_feedback"] = {
                 "error": "New package could not be prepared: %s" % exc,
                 "warnings": [],
@@ -225,7 +369,7 @@ def _run_uploaded_case(uploaded_files, run_clicked: bool) -> None:
             st.session_state["packet"] = None
             st.session_state["uploaded_case"] = uploaded_case
             st.session_state["packet_context"] = "upload:incomplete"
-            st.session_state["input_mode"] = "Triage new package"
+            st.session_state["input_mode"] = "Submit New Request"
             errors = list(uploaded_case.blocking_errors)
             if uploaded_case.missing_roles:
                 errors.append(
@@ -245,15 +389,15 @@ def _run_uploaded_case(uploaded_files, run_clicked: bool) -> None:
             return
         status.update(label="Running triage", state="running")
         packet = run_case(uploaded_case.case_dir)
-        st.session_state["packet"] = packet
-        st.session_state["uploaded_case"] = uploaded_case
-        st.session_state["packet_context"] = "upload:%s" % packet.case_id
-        st.session_state["input_mode"] = "Triage new package"
+        request_id = _add_uploaded_request(packet, uploaded_case, upload_workspace)
+        st.session_state["active_view"] = "detail"
+        st.session_state["active_request_id"] = request_id
         st.session_state["upload_feedback"] = None
         status.update(label="Triage complete", state="complete")
+        st.rerun()
 
 
-def render_packet(packet) -> None:
+def render_packet(packet, request_id: str = None) -> None:
     status_label = _status_label(packet)
     if packet.status == "blocked":
         st.error("%s - %s" % (status_label, packet.status_reason))
@@ -272,16 +416,17 @@ def render_packet(packet) -> None:
     col4.metric("Risk", packet.facts.risk.tier.title())
 
     render_action_cockpit(packet)
-    render_ai_assisted_drafts(packet)
+    with st.expander("Drafts", expanded=False):
+        render_ai_assisted_drafts(packet, key_suffix=request_id or packet.case_id)
     render_audit_details(packet)
 
 
 def render_action_cockpit(packet) -> None:
-    st.subheader("Action Cockpit")
     rows = _review_action_rows(packet)
     next_action = rows[0]["Action"] if rows else "Route decision packet to required reviewers"
     next_owner = rows[0]["Owner"] if rows else _next_owner(packet)
 
+    st.subheader("Decision")
     decision_col, action_col, owner_col = st.columns([0.8, 1.6, 1])
     decision_col.metric("Decision", _status_label(packet))
     action_col.markdown("**Next action**")
@@ -289,13 +434,13 @@ def render_action_cockpit(packet) -> None:
     owner_col.markdown("**Owner**")
     owner_col.write(next_owner)
 
-    render_reviewer_brief(packet)
+    render_reviewer_brief(packet, show_validation=False)
 
     follow_up_col, route_col = st.columns([1.25, 1])
     with follow_up_col:
         render_required_follow_up(packet)
     with route_col:
-        render_human_route(packet)
+        render_human_route(packet, show_guardrails=False)
 
 
 def render_audit_details(packet) -> None:
@@ -413,16 +558,17 @@ def render_required_follow_up(packet) -> None:
         st.caption("%s additional follow-up item(s) included in Audit details." % (len(rows) - len(display_rows)))
 
 
-def render_human_route(packet) -> None:
+def render_human_route(packet, show_guardrails: bool = True) -> None:
     st.subheader("Internal Review Route")
     st.caption("Routing recommendation only. No approval, spend commitment, or external send has occurred.")
     if packet.approval_route.required_reviewers:
         st.write(" > ".join(packet.approval_route.required_reviewers))
     else:
         st.write("Procurement owner")
-    with st.expander("Guardrails enforced"):
-        for action in packet.approval_route.prohibited_actions:
-            st.write("- %s" % action)
+    if show_guardrails:
+        with st.expander("Guardrails enforced"):
+            for action in packet.approval_route.prohibited_actions:
+                st.write("- %s" % action)
 
 
 def render_exports(packet) -> None:
@@ -457,10 +603,10 @@ def render_exports(packet) -> None:
     )
 
 
-def render_upload_details(uploaded_case) -> None:
+def render_upload_details(uploaded_case, expanded: bool = False) -> None:
     if not uploaded_case:
         return
-    with st.expander("Staged package mapping"):
+    with st.expander("Staged package mapping", expanded=expanded):
         role_matches = getattr(uploaded_case, "role_matches", [])
         optional_matches = getattr(uploaded_case, "optional_matches", [])
         warnings = getattr(uploaded_case, "warnings", [])
@@ -493,12 +639,13 @@ def render_upload_details(uploaded_case) -> None:
             st.caption("Ignored files: %s" % ", ".join(unmatched_files))
 
 
-def render_package_delta(packet, uploaded_case) -> None:
+def render_package_delta(packet, uploaded_case, show_title: bool = True) -> None:
     if not uploaded_case:
         return
-    st.subheader("Package Delta")
+    if show_title:
+        st.subheader("Package Delta")
     st.caption(
-        "This is a temporary standalone triage run. Uploaded files do not change the locked sample cases."
+        "Uploaded files created this request record. They do not change seeded requests."
     )
 
     baseline_id, baseline_packet = _matching_sample_baseline(packet)
@@ -573,11 +720,6 @@ def render_upload_feedback() -> None:
 
 
 def render_upload_landing() -> None:
-    st.subheader("Triage New Package")
-    st.info(
-        "Upload a complete vendor package to create a temporary standalone case. "
-        "This does not add files to any sample case."
-    )
     expected = pd.DataFrame(
         [
             {"Role": "Intake", "Required": True, "Accepted": ".xlsx"},
@@ -626,7 +768,7 @@ def render_overview(packet) -> None:
     render_context(packet)
 
 
-def render_reviewer_brief(packet) -> None:
+def render_reviewer_brief(packet, show_validation: bool = True) -> None:
     st.subheader("Reviewer Brief")
     synthesis = getattr(packet, "synthesis", None)
     if not synthesis:
@@ -637,17 +779,18 @@ def render_reviewer_brief(packet) -> None:
         "Built from the validated decision packet. Policy status, risk, budget, and routing remain deterministic."
     )
     st.caption("Synthesis source: %s" % synthesis.model_name)
-    with st.expander("Synthesis validation"):
-        st.write("Status: %s" % synthesis.validation_status)
-        st.write("Source: structured decision packet only")
-        st.write("Evidence cited: %s" % (", ".join(synthesis.cited_evidence_ids) or "n/a"))
-        if synthesis.validation_errors:
-            for error in synthesis.validation_errors:
-                st.warning(error)
+    if show_validation:
+        with st.expander("Synthesis validation"):
+            st.write("Status: %s" % synthesis.validation_status)
+            st.write("Source: structured decision packet only")
+            st.write("Evidence cited: %s" % (", ".join(synthesis.cited_evidence_ids) or "n/a"))
+            if synthesis.validation_errors:
+                for error in synthesis.validation_errors:
+                    st.warning(error)
 
 
-def render_ai_assisted_drafts(packet) -> None:
-    st.subheader("AI-Assisted Drafts")
+def render_ai_assisted_drafts(packet, key_suffix: str = None) -> None:
+    st.subheader("Drafts")
     synthesis = getattr(packet, "synthesis", None)
     use_synthesis = synthesis and synthesis.validation_status.startswith("passed")
     vendor_body = (
@@ -662,6 +805,7 @@ def render_ai_assisted_drafts(packet) -> None:
     )
     source = synthesis.model_name if synthesis else "deterministic packet draft"
     st.caption("Draft source: %s. Human approval is required before external use." % source)
+    key_suffix = key_suffix or packet.case_id
 
     vendor_tab, internal_tab = st.tabs(["Vendor follow-up", "Internal note"])
     with vendor_tab:
@@ -669,18 +813,15 @@ def render_ai_assisted_drafts(packet) -> None:
             "Draft vendor follow-up",
             value=vendor_body,
             height=220,
-            key="ai_vendor_follow_up_%s" % packet.case_id,
+            key="ai_vendor_follow_up_%s" % key_suffix,
         )
     with internal_tab:
         st.text_area(
             "Draft internal note",
             value=internal_body,
             height=220,
-            key="ai_internal_note_%s" % packet.case_id,
+            key="ai_internal_note_%s" % key_suffix,
         )
-
-    with st.expander("Original packet drafts"):
-        render_drafts(packet)
 
 
 def render_findings(packet, allow_expanders: bool = True) -> None:
@@ -783,22 +924,6 @@ def render_trace(packet, allow_expanders: bool = True) -> None:
     else:
         st.subheader("Raw trace JSON")
         st.json([entry.model_dump(mode="json") for entry in packet.trace])
-
-
-def _case_queue_row(case_id: str, packet) -> dict:
-    blockers = len([finding for finding in packet.findings if finding.severity == "blocker"])
-    return {
-        "Case": case_id,
-        "Vendor": packet.facts.vendor_name,
-        "Status": _status_label(packet),
-        "Risk": packet.facts.risk.tier.title(),
-        "ACV": packet.facts.annual_contract_value,
-        "TCV": packet.facts.total_contract_value.total_contract_value,
-        "Budget": packet.facts.budget.status.title(),
-        "Missing": len(packet.missing_information),
-        "Blockers": blockers,
-        "Next owner": _next_owner(packet),
-    }
 
 
 def _matching_sample_baseline(packet):
@@ -1100,12 +1225,6 @@ def _uploaded_artifacts(uploaded_files) -> list:
         UploadedArtifact(name=uploaded_file.name, content=uploaded_file.getvalue())
         for uploaded_file in uploaded_files
     ]
-
-
-def _clear_upload_workspace() -> None:
-    workspace = st.session_state.get("upload_workspace")
-    if workspace and Path(workspace).exists():
-        shutil.rmtree(workspace, ignore_errors=True)
 
 
 def _synthesis_runtime_signature() -> str:

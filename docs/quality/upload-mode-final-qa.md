@@ -14,7 +14,7 @@ This QA pass covered the repository after adding uploaded vendor package support
 
 ## Implementation Summary
 
-Upload mode now stages reviewer-provided files into the same canonical package shape used by the sample cases, then calls the same deterministic `run_case()` pipeline. The app accepts either five files or a zip containing the required files:
+The current submit flow stages reviewer-provided files into the same canonical package shape used by the seeded requests, then calls the same deterministic `run_case()` pipeline and adds a new request record to the session queue. The app accepts either five files or a zip containing the required files:
 
 - intake workbook
 - quote CSV
@@ -27,7 +27,7 @@ Policy docs and mock internal-system data still come from the bundled candidate 
 ## Issues Found And Fixed
 
 1. The previous app could only run bundled sample cases.
-   - Fixed by adding `vendor_agent/uploads.py` and a Streamlit `Triage new package` mode.
+   - Fixed by adding `vendor_agent/uploads.py` and the Streamlit `Submit New Request` flow.
 
 2. The pipeline required canonical case filenames.
    - Fixed by staging uploaded files as `uploaded_case_<required_suffix>` before calling `run_case()`.
@@ -79,7 +79,7 @@ Browser checks:
 
 ## Final Assessment
 
-The prototype now better matches the realistic review scenario: a reviewer can run bundled cases and can also test a new package with files. This materially improves exam fit because the app is no longer just a fixed-case demo; it demonstrates a reusable ingestion and policy workflow.
+The prototype now better matches the realistic review scenario: a reviewer can open seeded vendor requests and can also submit a new package with files. This materially improves exam fit because the app is no longer just a fixed-case demo; it demonstrates a reusable ingestion and policy workflow.
 
 The strongest properties remain deterministic policy routing, evidence-backed findings, human approval gates, and reproducible evals. Upload mode preserves those strengths because it does not fork the logic.
 

@@ -8,10 +8,10 @@ The provided PNG describes a vendor onboarding triage workflow:
 
 | PNG stage | Current implementation | Assessment |
 | --- | --- | --- |
-| Start: vendor onboarding case package | Dashboard sample cases plus `Triage new package` mode | Covered |
+| Start: vendor onboarding case package | Vendor request queue plus `Submit New Request` flow | Covered |
 | Parse and extract inputs | Intake workbook, vendor email, quote CSV, security questionnaire, contract PDF, policy docs, budget and vendor-register data | Covered |
 | Validate package | Required upload artifacts and case inventory validation | Covered |
-| Complete enough for triage? | Upload mode blocks missing core files; packet status and open requests show not approval-ready cases | Covered, but production would need persisted reviewer correction state |
+| Complete enough for triage? | Submit flow blocks missing core files; packet status and open requests show not approval-ready requests | Covered, but production would need persisted reviewer correction state |
 | Identify missing or incomplete items | `missing_information` plus `Required Follow-up` UI | Covered |
 | Draft vendor follow-up | Drafts tab and synthesis follow-up draft, both human-gated | Covered |
 | Escalate to human | `Human Review Route`, prohibited actions, and draft acknowledgement | Covered |
