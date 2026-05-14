@@ -207,7 +207,8 @@ def render_dashboard() -> None:
 
 
 def render_request_queue(records: list) -> None:
-    header = st.columns([0.75, 2.1, 1.05, 0.8, 0.9, 0.9, 1.3, 0.9, 0.9])
+    column_widths = [0.85, 2.0, 1.1, 0.65, 0.75, 0.65, 1.05, 0.75, 0.85]
+    header = st.columns(column_widths)
     header[0].markdown("**Request**")
     header[1].markdown("**Vendor**")
     header[2].markdown("**Status**")
@@ -219,7 +220,7 @@ def render_request_queue(records: list) -> None:
     header[8].markdown("**Actions**")
     for record in records:
         packet = record["packet"]
-        row = st.columns([0.75, 2.1, 1.05, 0.8, 0.9, 0.9, 1.3, 0.9, 0.9])
+        row = st.columns(column_widths)
         row[0].write(record["display_id"])
         row[1].markdown("**%s**" % packet.facts.vendor_name)
         row[1].caption(packet.facts.requesting_team)
@@ -230,8 +231,9 @@ def render_request_queue(records: list) -> None:
         row[6].write(_next_owner(packet))
         row[7].write(record["source"])
         if row[8].button(
-            "Open %s" % packet.facts.vendor_name,
+            "Open",
             key="open_%s" % record["request_id"],
+            help="Open %s" % packet.facts.vendor_name,
             use_container_width=True,
         ):
             st.session_state["active_view"] = "detail"

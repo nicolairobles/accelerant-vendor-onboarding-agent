@@ -20,13 +20,13 @@ def test_streamlit_app_renders_dashboard_homepage():
     assert any("Vendor Requests" in item.value for item in app.subheader)
     assert any("Queue Priorities" in item.value for item in app.subheader)
     assert any("Missing Items" in item.label for item in app.metric)
-    assert any("Open Workspace Depot" in item.label for item in app.button)
+    assert len(buttons_by_label(app, "Open")) == 3
 
 
 def test_streamlit_app_opens_seeded_request_from_dashboard():
     app = AppTest.from_file("app.py")
     app.run(timeout=30)
-    button_by_label(app, "Open Workspace Depot").click()
+    buttons_by_label(app, "Open")[1].click()
     app.run(timeout=30)
 
     assert not app.exception
@@ -57,14 +57,14 @@ def test_streamlit_app_submit_request_view_explains_queue_creation():
 def test_streamlit_app_can_delete_request_from_detail_view():
     app = AppTest.from_file("app.py")
     app.run(timeout=30)
-    button_by_label(app, "Open Workspace Depot").click()
+    buttons_by_label(app, "Open")[1].click()
     app.run(timeout=30)
     button_by_label(app, "Delete request").click()
     app.run(timeout=30)
 
     assert not app.exception
     assert any(item.label == "Requests" and item.value == "2" for item in app.metric)
-    assert not any("Workspace Depot" in item.label for item in app.button)
+    assert len(buttons_by_label(app, "Open")) == 2
 
 
 def test_uploaded_support_artifacts_can_be_compared_to_sample_baseline(tmp_path):
@@ -162,3 +162,7 @@ def button_by_label(app: AppTest, label: str):
         if button.label == label:
             return button
     raise AssertionError("Could not find button %r. Buttons: %s" % (label, [button.label for button in app.button]))
+
+
+def buttons_by_label(app: AppTest, label: str):
+    return [button for button in app.button if button.label == label]
