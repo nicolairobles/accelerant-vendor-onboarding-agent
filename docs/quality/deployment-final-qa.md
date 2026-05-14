@@ -28,12 +28,12 @@ This pass covered the final submission path after GitHub push and Streamlit depl
 | Deployed submit/upload path | Passed | Uploaded `net_new_supportflow_complete.zip`; app created a SupportFlow Assist request record with upload details behind disclosure. |
 | HTTP deployed smoke | Passed with session cookies | `curl -L -c cookiejar -b cookiejar` reached HTTP 200 and the Streamlit app shell. |
 | README screenshots | Passed | Automated local Playwright screenshots saved under `docs/assets/screenshots/`. |
-| Productized primary view | Passed | Chrome verified `Review sample case`, `Action Cockpit`, and primary synthesis provider details are absent from the first reviewer view. |
+| Productized primary view | Passed | Chrome verified implementation-mode copy and primary synthesis provider details are absent from the first reviewer view. |
 | OpenAI synthesis deployed smoke | Passed | Chrome verified optional OpenAI synthesis is configured while provider details stay out of the primary reviewer view. |
 
 ## Issues Found
 
-1. GitHub private repo access initially created review friction.
+1. GitHub access initially created review friction.
    - Fix: after secret scan and synthetic-data review, the submission repo was made public for frictionless Accelerant access.
 
 2. Streamlit pages initially rendered blank in Chrome.

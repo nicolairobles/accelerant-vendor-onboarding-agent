@@ -70,12 +70,12 @@ The LLM input should be a compact, structured view of `DecisionPacket`, not raw 
 
 ## UI Placement
 
-The Streamlit app should keep deterministic output first:
+The Streamlit app keeps deterministic output first:
 
-- Overview, findings, evidence, and trace remain deterministic.
-- LLM content appears in a clearly labeled section such as `LLM-assisted draft`.
-- The UI should show model name, generation time, and validation status.
-- Human reviewers should be able to ignore the generated text and still complete review from deterministic outputs.
+- Status, risk, budget, missing information, approval route, findings, evidence, and trace remain deterministic.
+- Reviewer synthesis appears as a brief and editable drafts generated from the validated packet.
+- Provider details and validation status stay in audit/details surfaces, not the primary review path.
+- Human reviewers can ignore the generated text and still complete review from deterministic outputs.
 - No generated draft should be sent from the app.
 
 ## Eval Plan
@@ -93,11 +93,11 @@ The deterministic eval remains the release gate. LLM evals become an additional 
 
 ## Deployment Implications
 
-The app should continue to work without an LLM key. If synthesis is added:
+The app works without an LLM key. When live synthesis is enabled:
 
 - keep `OPENAI_API_KEY` optional
 - configure it through Streamlit secrets, not source code
-- hide the synthesis panel when no key is present
+- fall back to deterministic synthesis when no key is present
 - fail closed if validation fails
 - never persist uploaded raw documents in model logs or broad app logs
 
