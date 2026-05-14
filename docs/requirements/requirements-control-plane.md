@@ -124,7 +124,7 @@ docs/
 
 ## Recommended GitHub Setup Later
 
-When this becomes a private GitHub repo:
+For the public GitHub submission repo:
 
 - Use GitHub Issues as executable work items.
 - Use issue forms so every task captures requirement ID, acceptance criteria, tests/evals, risk, and out-of-scope notes.
@@ -159,4 +159,3 @@ Any material change should update at least one of these files:
 - `AGENTS.md` if AI operating rules change
 
 If a change touches code but none of these files, it should be intentionally small and clearly tied to an existing requirement.
-

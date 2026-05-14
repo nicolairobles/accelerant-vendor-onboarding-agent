@@ -19,7 +19,7 @@ This matrix defines how we know each requirement is actually satisfied.
 | REQ-013 | Fresh-clone smoke test | README commands | Setup and CLI commands work from a clean environment. | Verified locally |
 | REQ-014 | Deployed smoke test | Streamlit URL | Deployed app loads and runs all cases without local files from reviewer. | Verified |
 | REQ-015 | Document review | `ARCHITECTURE.md`, `PRODUCTIONIZATION.md`, README | Docs explain architecture, product judgment, evals, guardrails, and production path. | Implemented |
-| REQ-016 | Confidentiality review | `.gitignore`, `.env.example`, git status | No secrets; repo stays private; package handling is explicit. | Verified locally |
+| REQ-016 | Public-sharing review | `.gitignore`, `.env.example`, git status, secret scan | No secrets; public repo contains only synthetic exercise materials and explicit env-var documentation. | Verified locally |
 | REQ-017 | Guardrail files review | `AGENTS.md`, `.github/`, `docs/requirements/` | AI/build guardrails exist and are referenced by future work. | Verified |
 | REQ-018 | Submit new request tests | `tests/test_upload_mode.py`, `tests/test_streamlit_app.py`, Streamlit smoke test | Multiple files and zip upload stage to a canonical case format; seeded requests are not mutated; missing required files are reported before triage; optional support docs are mapped. | Verified |
 | REQ-019 | Dashboard regression test | `tests/test_streamlit_app.py` | App home renders a vendor request queue with status, risk, spend, missing-info, source, open action, and next-owner fields. | Verified |

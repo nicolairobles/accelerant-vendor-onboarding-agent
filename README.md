@@ -6,9 +6,11 @@ The product direction is an agentic procurement triage assistant: parse a vendor
 
 ## Current Status
 
-This repo is a standalone private GitHub repository created outside Career OS for the Accelerant take-home.
+This repo is a standalone public GitHub repository created outside Career OS for the Accelerant take-home.
 
 Deployed reviewer app: [accelerant-vendor-app-agent-5rcbcuzjbmdlpyenpfeay9.streamlit.app](https://accelerant-vendor-app-agent-5rcbcuzjbmdlpyenpfeay9.streamlit.app/)
+
+Repository: [github.com/nicolairobles/accelerant-vendor-onboarding-agent](https://github.com/nicolairobles/accelerant-vendor-onboarding-agent)
 
 Current artifacts:
 
@@ -123,13 +125,13 @@ The CLI writes:
 
 ## Deployment QA
 
-Deployment smoke tests were run on May 13, 2026:
+Deployment smoke tests were run on May 14, 2026:
 
 - Streamlit deployed app opened successfully in Chrome.
-- Seeded TalentPulse AI request rendered the expected blocked packet.
-- Submit-new-request flow showed the expected missing-file validation before upload.
-- Uploaded zip package produced the expected Workspace Depot packet.
-- HTTP smoke check reached the deployed Streamlit app shell with a cookie jar.
+- Vendor Requests rendered the three seeded exam requests.
+- Workspace Depot request detail rendered the expected decision, reviewer brief, follow-up, route, drafts disclosure, and audit disclosure.
+- Submit New Request accepted `net_new_supportflow_complete.zip` and created a SupportFlow Assist request record.
+- Delete request and Restore Seeded Requests worked in the deployed session.
 
 See `docs/quality/deployment-final-qa.md` for the full deployment QA notes.
 
@@ -141,6 +143,6 @@ The live OpenAI provider is implemented behind `SynthesisBundle` and `build_llm_
 
 See `docs/research/llm-synthesis-assessment.md` for the recommended architecture and eval plan.
 
-## Confidentiality
+## Submission Sharing
 
-The candidate package was provided directly during the interview process. Keep this repository private unless Accelerant explicitly says otherwise.
+The exercise package states that the company names, people, data, and policies are synthetic. This repository is public for frictionless Accelerant review. No API keys, credentials, or real vendor data should be committed.

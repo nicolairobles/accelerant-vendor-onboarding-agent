@@ -87,9 +87,9 @@ The main limitation is that uploaded packages must follow the same schema shape 
 
 ## Recommended Next Steps
 
-1. Commit and push the repo to the private GitHub repository.
+1. Commit and push the repo to the public GitHub repository.
 2. Confirm GitHub Actions passes on `main`.
-3. Deploy privately with Streamlit Community Cloud.
+3. Deploy with Streamlit Community Cloud.
 4. Run deployed smoke tests for all three sample cases, multi-file upload, zip upload, and missing-file validation.
 5. Add README screenshots and a short reviewer walkthrough.
 6. Consider optional LLM synthesis for summaries and drafts only, behind structured-output validation and the existing eval gate.

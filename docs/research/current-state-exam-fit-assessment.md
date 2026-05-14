@@ -86,7 +86,7 @@ What is strong:
 - Deterministic rules for approvals, budget, risk, and missing documents are the right boundary.
 - LLM should not decide Legal/Finance/Security routing.
 - Evidence preservation and trace output are central, which is exactly what a human reviewer needs.
-- Deployment and private GitHub strategy are sensible.
+- Deployment and GitHub sharing strategy are sensible.
 
 What needs tightening:
 
@@ -247,7 +247,7 @@ Missing:
 Fix:
 
 - Do not deploy until the app actually handles all three cases.
-- When ready, keep repo private and invite reviewers.
+- When ready, publish the repo for frictionless reviewer access after confirming no secrets or real vendor data are committed.
 - Add a deployed URL and a "run locally" path.
 
 ## How Well It Addresses Venkat's Rubric

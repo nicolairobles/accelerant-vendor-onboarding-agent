@@ -12,7 +12,7 @@ The ideal shape is:
 - Python core package for ingestion, deterministic tools, policy checks, and structured output.
 - CLI command for repeatable local runs.
 - Pytest/eval harness that locks expected outputs for all three provided cases.
-- Private GitHub repo plus private deployed Streamlit app or Render app.
+- Public GitHub repo plus deployed Streamlit app or Render app after confirming the exercise materials are synthetic and no secrets are committed.
 
 This should be framed as an "agentic procurement triage assistant," not autonomous approval software.
 
@@ -157,7 +157,7 @@ prototype/
     .gitkeep
 ```
 
-The source package can live under `data/Candidate_package/` in the standalone submission repo if the repo is private. Do not publish the package publicly.
+The source package can live under `data/Candidate_package/` in the standalone submission repo because the exercise README states the company names, people, data, and policies are synthetic. Do not publish real vendor data or credentials.
 
 Core runtime flow:
 
@@ -475,7 +475,7 @@ accelerant-vendor-onboarding-agent
 
 ### GitHub visibility
 
-Use a private GitHub repo.
+Use a public GitHub repo for the final submission after a secret scan and synthetic-data review.
 
 Reasons:
 

@@ -15,7 +15,7 @@ The main miss is product specificity. The memo says "Streamlit app" and names br
 - Good deterministic-first architecture.
 - Correct separation between policy decisions and LLM synthesis.
 - Strong evaluation harness direction.
-- Appropriate deployment recommendation: clean private repo, private Streamlit or Render app.
+- Appropriate deployment recommendation: clean repo and deployed Streamlit or Render app. The initial private-repo recommendation was later superseded by a public submission repo after confirming the exercise materials are synthetic and no secrets are committed.
 - Good safety posture: no autonomous approvals, sends, spend commitments, or legal acceptance.
 
 ## What Was Underdeveloped
@@ -63,4 +63,3 @@ Add a product/UX spec before implementation. It should define:
 - Human approval controls.
 - Case-specific expected views.
 - Acceptance criteria for usability.
-

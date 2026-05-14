@@ -6,8 +6,8 @@ kanban-plugin: board
 
 ## Backlog
 
-- [ ] Create GitHub Issues, labels, and milestones after private repo exists
-- [ ] Add GitHub private-repo publication checklist
+- [ ] Create GitHub Issues, labels, and milestones after submission
+- [ ] Add public-repo publication checklist
 - [ ] Add deployment checklist for Streamlit Community Cloud
 - [ ] Add productionization note for Accelerant GPT / Agent Hub fit
 - [ ] Add optional OpenAI Agents SDK tracing spike
@@ -15,9 +15,7 @@ kanban-plugin: board
 
 ## Ready
 
-- [ ] Create private GitHub repo and push after user confirmation
-- [ ] Deploy private Streamlit app after GitHub repo exists
-- [ ] Run deployed smoke test
+<!-- Empty -->
 
 ## In Progress
 
@@ -78,6 +76,9 @@ kanban-plugin: board
 - [x] Rework case page into action-first review cockpit
 - [x] Clarify upload workflow and intake delta behavior
 - [x] Add net-new SupportFlow sample upload packet
+- [x] Create public GitHub repo and push after user confirmation
+- [x] Deploy Streamlit app after GitHub repo exists
+- [x] Run deployed smoke test
 - [x] Convert Streamlit app to a session-backed vendor request queue
 - [x] Add request open/delete lifecycle and move noisy details behind disclosure
 

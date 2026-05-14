@@ -7,7 +7,7 @@
 - Added `docs/requirements/requirements-register.md`.
 - Added `docs/requirements/acceptance-matrix.md`.
 - Added repo-local `AGENTS.md` with AI development rules.
-- Added GitHub issue form and pull request template for later private repo publication.
+- Added GitHub issue form and pull request template for later repo publication.
 - Added planning files for persistent AI working memory.
 - Created first vertical-slice work item for `REQ-001` through `REQ-009` on `case_003`.
 - Implemented deterministic schemas, inventory, parsers, tool checks, policy checks, trace recorder, pipeline, and CLI.

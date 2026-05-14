@@ -122,7 +122,7 @@ Implementation guardrails:
 
 Submission deployment:
 
-1. Keep repo private.
+1. Use a public submission repo after confirming no secrets or real vendor data are committed.
 2. Verify `python3 -m pytest -q`.
 3. Verify `python3 -m vendor_agent.cli eval`.
 4. Deploy Streamlit app.
@@ -133,8 +133,8 @@ Submission deployment:
 Current deployment:
 
 - Streamlit app: https://accelerant-vendor-app-agent-5rcbcuzjbmdlpyenpfeay9.streamlit.app/
-- Repository: private GitHub repository under `nicolairobles/accelerant-vendor-onboarding-agent`
-- No secrets are required for the deterministic build or the current synthesis fallback.
+- Repository: public GitHub repository at https://github.com/nicolairobles/accelerant-vendor-onboarding-agent
+- Streamlit secrets are configured for optional OpenAI synthesis in the deployed app; no secrets are committed, and the app works without them through deterministic fallback.
 - Reviewer access should be validated from a clean browser or intended reviewer account before final submission.
 
 Production deployment:
@@ -154,5 +154,5 @@ Production deployment:
 - Policy logic is Python-coded rather than managed through a policy admin surface.
 - Streamlit is acceptable for the take-home but not the final enterprise workflow UI.
 - Eval dataset has three cases only.
-- Reviewer synthesis is currently deterministic and LLM-ready, not live model-backed.
+- Reviewer synthesis has an optional live OpenAI provider in deployment, with deterministic fallback when provider config is absent or validation fails.
 - No external system writes are implemented, by design.

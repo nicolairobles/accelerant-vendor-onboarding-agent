@@ -82,9 +82,9 @@ The strongest parts are the deterministic pipeline, explicit evidence IDs, Pydan
 
 ## Recommended Next Steps
 
-1. Commit and push the repo to the private GitHub repository.
+1. Commit and push the repo to the public GitHub repository.
 2. Confirm GitHub Actions passes on `main`.
 3. Create GitHub milestones and issues from `docs/requirements/requirements-register.md`.
-4. Deploy the Streamlit app privately and run the same smoke checks against the deployed URL.
+4. Deploy the Streamlit app and run the same smoke checks against the deployed URL.
 5. Add README screenshots and a short reviewer walkthrough script for the Accelerant submission.
 6. Keep the eval harness as the regression gate for any further agentic or LLM-assisted enhancements.

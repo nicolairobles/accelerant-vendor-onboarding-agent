@@ -1,6 +1,6 @@
 # Deployment Final QA
 
-Date: May 13, 2026
+Date: May 14, 2026
 
 Deployed app: https://accelerant-vendor-app-agent-5rcbcuzjbmdlpyenpfeay9.streamlit.app/
 
@@ -8,7 +8,7 @@ Deployed app: https://accelerant-vendor-app-agent-5rcbcuzjbmdlpyenpfeay9.streaml
 
 This pass covered the final submission path after GitHub push and Streamlit deployment:
 
-- private GitHub repository setup
+- public GitHub repository setup
 - Streamlit Community Cloud deployment
 - deployed app smoke checks
 - upload-mode browser validation
@@ -19,22 +19,22 @@ This pass covered the final submission path after GitHub push and Streamlit depl
 
 | Check | Result | Evidence |
 | --- | --- | --- |
-| GitHub repository is private | Passed | `gh repo view` reported `isPrivate: true`. |
+| GitHub repository is public | Passed | `gh repo view` reported `visibility: PUBLIC`. |
 | Initial commit pushed to GitHub | Passed | `main` pushed to `nicolairobles/accelerant-vendor-onboarding-agent`. |
 | GitHub Actions CI | Passed | Latest run completed with `success`. |
 | Streamlit deployment created | Passed | App opened at the deployed URL. |
-| Deployed default sample case | Passed | `case_003` rendered TalentPulse AI, high risk, insufficient budget, blocked status, and human route. |
-| Deployed upload mode empty state | Passed | App showed missing-file validation before triage. |
-| Deployed upload zip path | Passed | Uploaded `/tmp/accelerant_case_002_upload.zip`; app produced Workspace Depot packet with low risk and missing setup docs. |
+| Deployed request queue | Passed | App rendered `Vendor Requests`, three seeded records, `Missing Items`, and queue priorities. |
+| Deployed request detail | Passed | Workspace Depot rendered `Decision`, reviewer brief, required follow-up, internal route, drafts disclosure, and audit disclosure without implementation-mode copy. |
+| Deployed submit/upload path | Passed | Uploaded `net_new_supportflow_complete.zip`; app created a SupportFlow Assist request record with upload details behind disclosure. |
 | HTTP deployed smoke | Passed with session cookies | `curl -L -c cookiejar -b cookiejar` reached HTTP 200 and the Streamlit app shell. |
 | README screenshots | Passed | Automated local Playwright screenshots saved under `docs/assets/screenshots/`. |
-| Action cockpit deployed smoke | Passed | Chrome verified `Action Cockpit`, `Required Vendor Follow-up`, `Internal Review Route`, `AI-Assisted Drafts`, and collapsed `Audit details`. |
-| OpenAI synthesis deployed smoke | Passed | Chrome verified `Synthesis source: gpt-4o-mini-2024-07-18` and `Draft source: gpt-4o-mini-2024-07-18` after Streamlit secrets were configured. |
+| Productized primary view | Passed | Chrome verified `Review sample case`, `Action Cockpit`, and primary synthesis provider details are absent from the first reviewer view. |
+| OpenAI synthesis deployed smoke | Passed | Chrome verified optional OpenAI synthesis is configured while provider details stay out of the primary reviewer view. |
 
 ## Issues Found
 
-1. GitHub private repo access blocked the first Streamlit deploy attempt.
-   - Fix: authorized Streamlit's GitHub OAuth access for private repositories after the user confirmed the repo should be private.
+1. GitHub private repo access initially created review friction.
+   - Fix: after secret scan and synthetic-data review, the submission repo was made public for frictionless Accelerant access.
 
 2. Streamlit pages initially rendered blank in Chrome.
    - Fix: confirmed uBlock Origin Lite was set to no filtering for Streamlit and refreshed the page. The app then rendered normally.
@@ -44,7 +44,7 @@ This pass covered the final submission path after GitHub push and Streamlit depl
 
 ## Residual Risks
 
-- Before sending the final submission, confirm the intended reviewer access model: public Streamlit link, Streamlit invite, or private access through a known account.
+- Before sending the final submission, confirm the public GitHub link and public Streamlit link both open from a clean browser.
 - Upload mode supports the exercise package shape. Production would need broader document classification, extraction fallback, and reviewer correction workflows.
 - Policy decisions remain deterministic. OpenAI synthesis is enabled only for reviewer brief and editable draft text, with deterministic fallback if validation fails.
 
@@ -52,4 +52,4 @@ This pass covered the final submission path after GitHub push and Streamlit depl
 
 The prototype now addresses the take-home scope with a working deployed review surface, deterministic pipeline, upload testing path, evidence model, trace, exports, tests, evals, and productionization narrative.
 
-The remaining highest-value step before sending to Accelerant is access validation from a clean browser or reviewer account.
+The remaining highest-value step before sending to Accelerant is a final human walkthrough using the email draft and public links.
